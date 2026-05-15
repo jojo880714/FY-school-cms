@@ -410,6 +410,7 @@ export function CreatePage() {
         .from('tuition_tiers')
         .select('*');
       const { data: housingData } = await supabase.from('housing').select('*');
+      const { data: cityData } = await supabase.from('city_info').select('*');
 
       const schoolsInfo = selected.map((school) => ({
         school,
@@ -422,6 +423,9 @@ export function CreatePage() {
         ),
         housing: (housingData || []).filter((h) => h.school_id === school.id),
         note: notes[school.id] || '',
+        cityInfo: (cityData || []).filter((ci) => 
+          (campusData || []).filter((c) => c.school_id === school.id).some((c) => c.city === ci.city)
+        ),
       }));
 
       const slug = `${selected

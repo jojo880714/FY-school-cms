@@ -127,15 +127,16 @@ serve(async (req: Request) => {
     }).join("\n");
 
     // 8. City cards
+    const allCityInfo = schools.flatMap((item: any) => item.cityInfo || []);
     const seenCities = new Set<string>();
     const cityCards = schools.flatMap((item: any) =>
-      (item.campuses || []).map((c: any) => ({ ...c, cityInfo: item.cityInfo }))
+      (item.campuses || []).map((c: any) => c)
     ).filter((c: any) => {
       if (seenCities.has(c.city)) return false;
       seenCities.add(c.city);
       return true;
     }).map((c: any) => {
-      const ci = c.cityInfo;
+      const ci = allCityInfo.find((x: any) => x.city === c.city);
       return `
       <div class="city-card">
         <div class="city-name">${c.city}</div>
