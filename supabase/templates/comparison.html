@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{PAGE_TITLE}}</title>
+<style>
+  :root {
+    --brand: #C41E3A;
+    --brand-dark: #9B1530;
+    --brand-light: #fdf0f2;
+    --bg: #f9fafb;
+    --card: #ffffff;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 48px 20px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(196,30,58,0.3) 0%, transparent 60%);
+  }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(196,30,58,0.8);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 99px;
+    margin-bottom: 16px;
+  }
+  .hero h1 { color: white; font-size: clamp(20px, 4vw, 32px); font-weight: 700; line-height: 1.3; margin-bottom: 10px; }
+  .hero-sub { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 24px; }
+  .hero-schools {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  .hero-school-chip {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 99px;
+  }
+
+  /* NAV */
+  .sticky-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .sticky-nav::-webkit-scrollbar { display: none; }
+  .nav-inner {
+    display: flex; gap: 0; min-width: max-content;
+    padding: 0 16px;
+  }
+  .nav-link {
+    display: block;
+    padding: 14px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color .15s, border-color .15s;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+  /* MAIN */
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* SECTION */
+  .section { margin-bottom: 40px; }
+  .section-title {
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--brand);
+    display: inline-block;
+  }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #f3f4f6; padding: 4px; border-radius: 10px; }
+  .tab-btn {
+    flex: 1; padding: 8px 12px;
+    border: none; background: transparent;
+    font-size: 13px; font-weight: 500; color: var(--text-muted);
+    border-radius: 7px; cursor: pointer; transition: all .15s;
+  }
+  .tab-btn.active { background: white; color: var(--brand); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* COMPARISON TABLE */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; min-width: 480px; }
+  thead tr { background: var(--brand); color: white; }
+  thead th { padding: 12px 16px; font-size: 13px; font-weight: 600; text-align: left; }
+  thead th:first-child { width: 140px; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  tbody td { padding: 11px 16px; font-size: 13px; border-top: 1px solid var(--border); vertical-align: top; }
+  tbody td:first-child { font-weight: 500; color: var(--text-muted); font-size: 12px; }
+  .check { color: #10b981; font-size: 15px; }
+  .cross { color: #ef4444; font-size: 15px; }
+
+  /* SCHOOL CARDS */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .school-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    background: var(--brand);
+    padding: 14px 16px;
+    color: white;
+  }
+  .card-header h3 { font-size: 15px; font-weight: 700; }
+  .card-header p { font-size: 11px; opacity: .8; margin-top: 2px; }
+  .card-body { padding: 16px; }
+  .card-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+  .card-row:last-child { border-bottom: none; }
+  .card-label { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+  .card-value { font-size: 13px; font-weight: 500; text-align: right; }
+
+  /* INTENSITY BAR */
+  .intensity-section { margin-bottom: 8px; }
+  .intensity-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .intensity-track { height: 8px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+  .intensity-fill {
+    height: 100%; background: linear-gradient(90deg, var(--brand), #ff6b8a);
+    border-radius: 99px;
+    width: 0;
+    transition: width 1s ease;
+  }
+
+  /* CALCULATOR */
+  .calc-box {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .calc-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+  .calc-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .calc-label { font-size: 13px; color: var(--text-muted); min-width: 60px; }
+  .calc-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    width: 90px;
+    outline: none;
+  }
+  .calc-input:focus { border-color: var(--brand); }
+  .calc-toggle { display: flex; gap: 4px; }
+  .toggle-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .toggle-btn.active { background: var(--brand); color: white; border-color: var(--brand); }
+  .calc-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .calc-result-card {
+    background: var(--brand-light);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .calc-school-name { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .calc-amount { font-size: 18px; font-weight: 700; color: var(--brand); }
+  .calc-breakdown { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ADVISOR NOTE */
+  .advisor-note {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-left: 4px solid #f59e0b;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .advisor-note-label { font-size: 11px; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .advisor-note-text { font-size: 13px; color: #78350f; line-height: 1.6; }
+
+  /* CITY INFO */
+  .city-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .city-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .city-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .city-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--brand-light);
+    color: var(--brand);
+    font-weight: 500;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 32px 16px 28px; }
+    .main { padding: 16px 12px 40px; }
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">加拿大語言學校比較 2026</div>
+    <h1>{{PAGE_TITLE}}</h1>
+    <p class="hero-sub">由放洋留遊學顧問為您整理</p>
+    <div class="hero-schools">
+      {{HERO_SCHOOL_CHIPS}}
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="sticky-nav">
+  <div class="nav-inner">
+    <a href="#overview" class="nav-link active">總覽比較</a>
+    <a href="#programs" class="nav-link">課程方案</a>
+    <a href="#tuition" class="nav-link">學費計算</a>
+    <a href="#housing" class="nav-link">住宿費用</a>
+    <a href="#cities" class="nav-link">城市資訊</a>
+    <a href="#detail" class="nav-link">各校詳情</a>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <section id="overview" class="section">
+    <div class="section-title">總覽比較</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('compare')">比較表格</button>
+      <button class="tab-btn" onclick="switchTab('cards')">卡片檢視</button>
+    </div>
+    <div id="tab-compare" class="tab-panel active">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>項目</th>
+              {{TABLE_HEADERS}}
+            </tr>
+          </thead>
+          <tbody>
+            {{TABLE_ROWS}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div id="tab-cards" class="tab-panel">
+      <div class="cards-grid">
+        {{OVERVIEW_CARDS}}
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRAMS -->
+  <section id="programs" class="section">
+    <div class="section-title">課程方案</div>
+    <div class="cards-grid">
+      {{PROGRAM_CARDS}}
+    </div>
+  </section>
+
+  <!-- TUITION CALCULATOR -->
+  <section id="tuition" class="section">
+    <div class="section-title">學費計算器</div>
+    <div class="calc-box">
+      <div class="calc-title">選擇週數，立即試算各校費用</div>
+      <div class="calc-row">
+        <span class="calc-label">週數</span>
+        <input class="calc-input" type="number" id="calc-weeks" value="8" min="1" max="52" oninput="calcUpdate()">
+      </div>
+      <div class="calc-row">
+        <span class="calc-label">住宿</span>
+        <div class="calc-toggle">
+          <button class="toggle-btn active" onclick="calcToggleHousing(this, false)">不含住宿</button>
+          <button class="toggle-btn" onclick="calcToggleHousing(this, true)">含住宿</button>
+        </div>
+      </div>
+      <div class="calc-results" id="calc-results">
+        {{CALC_PLACEHOLDERS}}
+      </div>
+    </div>
+  </section>
+
+  <!-- HOUSING -->
+  <section id="housing" class="section">
+    <div class="section-title">住宿費用</div>
+    <div class="cards-grid">
+      {{HOUSING_CARDS}}
+    </div>
+  </section>
+
+  <!-- CITIES -->
+  <section id="cities" class="section">
+    <div class="section-title">城市資訊</div>
+    <div class="cards-grid">
+      {{CITY_CARDS}}
+    </div>
+  </section>
+
+  <!-- DETAIL -->
+  <section id="detail" class="section">
+    <div class="section-title">各校詳情</div>
+    <div class="cards-grid">
+      {{DETAIL_CARDS}}
+    </div>
+  </section>
+
+</div>
+
+<div class="footer">
+  本頁面由放洋留遊學顧問系統產生 · 資料僅供參考，以學校官方公告為準
+</div>
+
+<script>
+// ── Tab 切換 ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── 學費計算器資料 ──
+const TUITION_DATA = {{TUITION_JSON}};
+const HOUSING_DATA = {{HOUSING_JSON}};
+let includeHousing = false;
+
+function calcToggleHousing(btn, val) {
+  includeHousing = val;
+  document.querySelectorAll('.calc-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  calcUpdate();
+}
+
+function calcUpdate() {
+  const weeks = parseInt(document.getElementById('calc-weeks').value) || 1;
+  const container = document.getElementById('calc-results');
+  container.innerHTML = TUITION_DATA.map(school => {
+    const rate = school.price_per_week || 0;
+    const tuition = rate * weeks;
+    const housingRate = includeHousing ? (school.housing_min || 0) : 0;
+    const housing = housingRate * weeks;
+    const total = tuition + housing;
+    return `
+      <div class="calc-result-card">
+        <div class="calc-school-name">${school.name}</div>
+        <div class="calc-amount">CAD$${total.toLocaleString()}</div>
+        <div class="calc-breakdown">學費 $${tuition.toLocaleString()}${includeHousing ? ` + 住宿 $${housing.toLocaleString()}` : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── 強度動畫 ──
+function animateBars() {
+  document.querySelectorAll('.intensity-fill').forEach(bar => {
+    const target = bar.getAttribute('data-width');
+    setTimeout(() => { bar.style.width = target; }, 200);
+  });
+}
+
+// ── 導覽列 active ──
+function initNav() {
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.nav-link');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  calcUpdate();
+  animateBars();
+  initNav();
+});
+</script>
+</body>
+</html>

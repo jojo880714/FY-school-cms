@@ -1,0 +1,10 @@
+name = "fy-school-view-page"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+workers_dev = true
+
+[vars]
+SUPABASE_URL = "https://uxxpagylkdljjaxslmyj.supabase.co"
+
+# Secrets (set via `wrangler secret put`):
+#   SUPABASE_SERVICE_ROLE_KEY
