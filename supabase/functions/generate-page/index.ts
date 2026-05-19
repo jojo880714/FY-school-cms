@@ -136,7 +136,7 @@ serve(async (req: Request) => {
       seenCities.add(c.city);
       return true;
     }).map((c: any) => {
-      const ci = allCityInfo.find((x: any) => x.city === c.city);
+      const ci = allCityInfo.find((x: any) => x.city.trim().toLowerCase() === c.city.trim().toLowerCase());
       return `
       <div class="city-card">
         <div class="city-name">${c.city}</div>
