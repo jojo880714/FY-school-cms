@@ -58,6 +58,7 @@
 | Phase 1：固定模板系統 | ✅ 完成 | generate-page 改寫 + HTML 模板建立（commit 5c50439） |
 | 問題一：頁面沒儲存到 generated_pages | ✅ 完成並驗收 | 根因為 RLS policy 綁 created_by，但 service role 寫入時該欄為 NULL，導致前台讀不到。已改為團隊共享 policy（authenticated 皆可讀寫），13 筆歷史頁面已恢復顯示 |
 | 問題二：城市資訊顯示「待補充」 | ✅ 完成並驗收 | 前台有撈 city_info 但未放進 Edge Function body。已修正為 schoolsInfo[].cityInfo 陣列傳入，Edge Function 配合改為陣列 lookup（commit a1a8103）。Edge Function 已部署上線（v21），前台實測三個城市資訊正常顯示 |
+| Phase 2：city_info 鏈路完整化 | ✅ 完成 | 資料層 6 項 SQL 驗證全綠 + Edge Function 升級 v22 normalize 比對（commit 12339eb / PHASE_PLAN.md dfc6969） |
 
 ### 關鍵狀態註記
 
@@ -74,7 +75,7 @@
 > 以下為功能主線。建議依序進行，每個 Phase 動工前在電腦前互動式處理，
 > 涉及資料庫結構變更或重新部署的步驟需人工確認，不做無人值守自動執行。
 
-### Phase 2：城市資訊串接完整化（次優先）
+### Phase 2：城市資訊串接完整化 ✅ 完成
 - 問題二根因已修，但需盤點 city_info 從資料庫到頁面顯示的完整鏈路是否還有其他缺口
 - 動工前先補完整書面計畫與驗收條件
 
