@@ -1,7 +1,7 @@
 # PHASE_PLAN.md — Phase 2：city_info 鏈路完整化
 
-> 版本：v1.0 / 2026-05-19  
-> 狀態：**草稿，待 Claude Code + Supabase MCP 資料驗證後定案**  
+> 版本：v1.1 / 完工 2026-05-19  
+> 狀態：✅ Phase 2 完工  
 > 前提：Phase 1 ✅、問題一 ✅、問題二 ✅，系統處於穩定狀態
 
 ---
@@ -157,12 +157,12 @@ HAVING COUNT(*) > 1;
 
 Phase 2 完成的定義（需全部達成）：
 
-- [ ] SQL 4-3 執行結果：0 筆（無城市缺口）
-- [ ] SQL 4-4 執行結果：三城市 × 6 欄位（population / climate / cost_of_living_monthly_cad / transit_monthly_cad / transit_card_name / highlights）全部為 true
-- [ ] SQL 4-5 確認：兩表城市名稱完全一致
-- [ ] SQL 4-6 確認：city_info 無重複城市
-- [ ] Edge Function 城市比對改為 trim + toLowerCase，deploy 至線上
-- [ ] 前台選含所有現有城市的學校組合，產生頁面，肉眼確認所有城市資訊區塊無「待補充」
+- [x] SQL 4-3 執行結果：0 筆（無城市缺口）
+- [x] SQL 4-4 執行結果：三城市 × 6 欄位（population / climate / cost_of_living_monthly_cad / transit_monthly_cad / transit_card_name / highlights）全部為 true
+- [x] SQL 4-5 確認：兩表城市名稱完全一致
+- [x] SQL 4-6 確認：city_info 無重複城市
+- [x] Edge Function 城市比對改為 trim + toLowerCase，deploy 至線上
+- [x] 前台選含所有現有城市的學校組合，產生頁面，肉眼確認所有城市資訊區塊無「待補充」
 
 ---
 
