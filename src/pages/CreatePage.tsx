@@ -15,128 +15,67 @@ interface Campus {
   id: string;
   school_id: string;
   city: string;
+  metro_station: string | null;
+  walk_minutes: number | null;
 }
-interface SchoolWithCampuses extends School {
-  campuses: Campus[];
+interface CampusWithSchool extends Campus {
+  school: School;
 }
 
 const DRAFT_KEY = 'cms_draft';
 const MAX = 5;
 
-function SchoolCard({
-  school,
+function CampusCard({
+  campus,
   selected,
-  disabled,
   onToggle,
+  disabled,
 }: {
-  school: SchoolWithCampuses;
+  campus: CampusWithSchool;
   selected: boolean;
+  onToggle: (campus: CampusWithSchool) => void;
   disabled: boolean;
-  onToggle: () => void;
 }) {
-  const cities = [...new Set(school.campuses.map((c) => c.city))];
   return (
-    <button
-      onClick={onToggle}
-      disabled={disabled && !selected}
+    <div
+      onClick={() => !disabled || selected ? onToggle(campus) : null}
       style={{
-        width: '100%',
-        textAlign: 'left',
-        padding: '14px 16px',
-        borderRadius: '12px',
         border: selected ? '2px solid #C41E3A' : '1px solid #e5e7eb',
         background: selected ? '#fdf0f2' : disabled ? '#f9fafb' : 'white',
         cursor: disabled && !selected ? 'not-allowed' : 'pointer',
         opacity: disabled && !selected ? 0.5 : 1,
+        borderRadius: 12,
+        padding: '16px',
+        transition: 'all 0.15s',
       }}
     >
+      <div style={{ fontWeight: 700, fontSize: 16, color: '#111', marginBottom: 4 }}>
+        {campus.school.name}
+      </div>
+      <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+        {campus.city}
+      </div>
+      {campus.metro_station && (
+        <div style={{ fontSize: 12, color: '#9ca3af' }}>
+          📍 {campus.metro_station}
+          {campus.walk_minutes ? `（步行 ${campus.walk_minutes} 分鐘）` : ''}
+        </div>
+      )}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: '12px',
+          marginTop: 10,
+          border: selected ? 'none' : '1.5px solid #d1d5db',
+          background: selected ? '#C41E3A' : 'transparent',
+          color: selected ? 'white' : '#6b7280',
+          borderRadius: 6,
+          padding: '4px 10px',
+          fontSize: 12,
+          display: 'inline-block',
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '4px',
-            }}
-          >
-            <span style={{ fontWeight: '600', fontSize: '14px' }}>
-              {school.name}
-            </span>
-            {school.founded && (
-              <span style={{ fontSize: '11px', color: '#9ca3af' }}>
-                est. {school.founded}
-              </span>
-            )}
-          </div>
-          <p
-            style={{
-              fontSize: '12px',
-              color: '#6b7280',
-              margin: '0 0 8px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {school.full_name}
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-            {cities.map((city) => (
-              <span
-                key={city}
-                style={{
-                  fontSize: '11px',
-                  padding: '2px 8px',
-                  borderRadius: '99px',
-                  background: '#f3f4f6',
-                  color: '#374151',
-                }}
-              >
-                {city}
-              </span>
-            ))}
-            {school.english_only_policy && (
-              <span
-                style={{
-                  fontSize: '11px',
-                  padding: '2px 8px',
-                  borderRadius: '99px',
-                  background: '#d1fae5',
-                  color: '#065f46',
-                }}
-              >
-                English Only
-              </span>
-            )}
-          </div>
-        </div>
-        <div
-          style={{
-            width: '22px',
-            height: '22px',
-            borderRadius: '50%',
-            border: selected ? 'none' : '1.5px solid #d1d5db',
-            background: selected ? '#C41E3A' : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          {selected && (
-            <span style={{ color: 'white', fontSize: '12px' }}>✓</span>
-          )}
-        </div>
+        {selected ? '✓ 已選' : '+ 選擇'}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -253,17 +192,17 @@ function AdvisorNotes({
   notes,
   onChange,
 }: {
-  schools: SchoolWithCampuses[];
+  schools: CampusWithSchool[];
   notes: Record<string, string>;
   onChange: (id: string, note: string) => void;
 }) {
   if (schools.length === 0) return null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {schools.map((school) => {
-        const note = notes[school.id] || '';
+      {schools.map((campus) => {
+        const note = notes[campus.id] || '';
         return (
-          <div key={school.id}>
+          <div key={campus.id}>
             <label
               style={{
                 display: 'block',
@@ -272,7 +211,7 @@ function AdvisorNotes({
                 marginBottom: '6px',
               }}
             >
-              對 <span style={{ color: '#111' }}>{school.name}</span> 的備注{' '}
+              對 <span style={{ color: '#111' }}>{campus.school.name} {campus.city}</span> 的備注{' '}
               <span style={{ color: '#9ca3af', fontWeight: '400' }}>
                 （顯示在頁面上）
               </span>
@@ -281,10 +220,10 @@ function AdvisorNotes({
               <textarea
                 value={note}
                 onChange={(e) =>
-                  onChange(school.id, e.target.value.slice(0, 300))
+                  onChange(campus.id, e.target.value.slice(0, 300))
                 }
                 rows={3}
-                placeholder={`例如：${school.name} 特別適合想快速進步的學生...`}
+                placeholder={`例如：${campus.school.name} ${campus.city} 特別適合想快速進步的學生...`}
                 style={{
                   width: '100%',
                   padding: '10px 14px',
@@ -318,9 +257,9 @@ function AdvisorNotes({
 
 export function CreatePage() {
   const navigate = useNavigate();
-  const [allSchools, setAllSchools] = useState<SchoolWithCampuses[]>([]);
+  const [allCampuses, setAllCampuses] = useState<CampusWithSchool[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<SchoolWithCampuses[]>([]);
+  const [selected, setSelected] = useState<CampusWithSchool[]>([]);
   const [fields, setFields] = useState<Record<string, boolean>>(
     Object.fromEntries(ALL_FIELD_KEYS.map((k) => [k, true]))
   );
@@ -339,13 +278,15 @@ export function CreatePage() {
         .select('*')
         .order('name');
       const { data: campuses } = await supabase.from('campuses').select('*');
-      if (schools && campuses)
-        setAllSchools(
-          schools.map((s) => ({
-            ...s,
-            campuses: campuses.filter((c) => c.school_id === s.id),
+      if (schools && campuses) {
+        const schoolMap = Object.fromEntries(schools.map((s) => [s.id, s]));
+        setAllCampuses(
+          campuses.map((c) => ({
+            ...c,
+            school: schoolMap[c.school_id],
           }))
         );
+      }
       setLoading(false);
     }
     load();
@@ -363,24 +304,27 @@ export function CreatePage() {
   }, []);
 
   useEffect(() => {
-    if (allSchools.length === 0) return;
+    if (allCampuses.length === 0) return;
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
     try {
-      const d = JSON.parse(raw);
-      if (d.ids)
+      const draft = JSON.parse(raw);
+      if (draft.selectedIds) {
         setSelected(
-          d.ids
-            .map((id: string) => allSchools.find((s) => s.id === id))
-            .filter(Boolean)
+          draft.selectedIds
+            .map((id: string) => allCampuses.find((c) => c.id === id))
+            .filter(Boolean) as CampusWithSchool[]
         );
-    } catch {}
-  }, [allSchools]);
+      }
+    } catch {
+      // ignore
+    }
+  }, [allCampuses]);
 
   const saveDraft = useCallback(() => {
     localStorage.setItem(
       DRAFT_KEY,
-      JSON.stringify({ ids: selected.map((s) => s.id), fields, notes, title })
+      JSON.stringify({ selectedIds: selected.map((c) => c.id), fields, notes, title })
     );
     setSavedAt(new Date());
   }, [selected, fields, notes, title]);
@@ -390,13 +334,13 @@ export function CreatePage() {
     return () => clearInterval(t);
   }, [saveDraft]);
 
-  function toggleSchool(school: SchoolWithCampuses) {
+  function toggleCampus(campus: CampusWithSchool) {
     setSelected((prev) =>
-      prev.find((s) => s.id === school.id)
-        ? prev.filter((s) => s.id !== school.id)
+      prev.find((c) => c.id === campus.id)
+        ? prev.filter((c) => c.id !== campus.id)
         : prev.length >= MAX
         ? prev
-        : [...prev, school]
+        : [...prev, campus]
     );
   }
 
@@ -404,7 +348,6 @@ export function CreatePage() {
     if (selected.length === 0) return;
     setGenerating(true);
     try {
-      const { data: campusData } = await supabase.from('campuses').select('*');
       const { data: programData } = await supabase.from('programs').select('*');
       const { data: tuitionData } = await supabase
         .from('tuition_tiers')
@@ -412,27 +355,22 @@ export function CreatePage() {
       const { data: housingData } = await supabase.from('housing').select('*');
       const { data: cityData } = await supabase.from('city_info').select('*');
 
-      const schoolsInfo = selected.map((school) => ({
-        school,
-        campuses: (campusData || []).filter((c) => c.school_id === school.id),
-        programs: (programData || []).filter((p) => p.school_id === school.id),
+      const schoolsInfo = selected.map((campus) => ({
+        school: campus.school,
+        campuses: [campus],
+        programs: (programData || []).filter((p) => p.school_id === campus.school_id),
         tiers: (tuitionData || []).filter((t) =>
           (programData || [])
-            .filter((p) => p.school_id === school.id)
+            .filter((p) => p.school_id === campus.school_id)
             .some((p) => p.id === t.program_id)
         ),
-        housing: (housingData || []).filter((h) => h.school_id === school.id),
-        note: notes[school.id] || '',
-        cityInfo: (cityData || []).filter((ci) => 
-          (campusData || []).filter((c) => c.school_id === school.id).some((c) => c.city === ci.city)
-        ),
+        housing: (housingData || []).filter((h) => h.school_id === campus.school_id),
+        note: notes[campus.id] || '',
+        cityInfo: (cityData || []).filter((ci) => ci.city === campus.city),
       }));
 
-      const slug = `${selected
-        .map((s) => s.name.toLowerCase())
-        .join('-')}-${Date.now().toString().slice(-4)}`;
-      const pageTitle =
-        title || selected.map((s) => s.name).join(' vs ') + ' 比較 2026';
+      const slug = `${selected.map((c) => `${c.school.name.toLowerCase()}-${c.city.toLowerCase()}`).join('-')}-${Date.now().toString().slice(-4)}`;
+      const pageTitle = title || selected.map((c) => `${c.school.name} ${c.city}`).join(' vs ') + ' 比較 2026';
       const selectedFieldLabels = Object.entries(fields)
         .filter(([, v]) => v)
         .map(([k]) => k);
@@ -458,7 +396,8 @@ export function CreatePage() {
       await supabase.from('generated_pages').insert({
         slug,
         title: pageTitle,
-        school_ids: selected.map((s) => s.id),
+        school_ids: selected.map((c) => c.school_id),
+        campus_ids: selected.map((c) => c.id),
         selected_fields: fields,
         advisor_notes: notes,
         html_url: result.url,
@@ -655,14 +594,15 @@ export function CreatePage() {
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
             >
-              {allSchools.map((school) => (
-                <SchoolCard
-                  key={school.id}
-                  school={school}
-                  selected={!!selected.find((s) => s.id === school.id)}
-                  disabled={selected.length >= MAX}
-                  onToggle={() => toggleSchool(school)}
-                />
+              {allCampuses.map((campus) => (
+                <div key={campus.id}>
+                  <CampusCard
+                    campus={campus}
+                    selected={!!selected.find((c) => c.id === campus.id)}
+                    onToggle={toggleCampus}
+                    disabled={selected.length >= MAX}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -685,7 +625,7 @@ export function CreatePage() {
                   fontSize: '12px',
                 }}
               >
-                （最多 5 間）
+                （最多 5 個校區）
               </span>
             </h2>
             {selected.length === 0 ? (
@@ -698,16 +638,16 @@ export function CreatePage() {
                 }}
               >
                 <p style={{ fontSize: '13px', color: '#9ca3af', margin: 0 }}>
-                  從左側選擇 1–5 間學校
+                  從左側選擇 1–5 個校區
                 </p>
               </div>
             ) : (
               <div
                 style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}
               >
-                {selected.map((school, index) => (
+                {selected.map((campus, index) => (
                   <div
-                    key={school.id}
+                    key={campus.id}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -737,12 +677,12 @@ export function CreatePage() {
                     <span
                       style={{ fontSize: '13px', fontWeight: '500', flex: 1 }}
                     >
-                      {school.name}
+                      {campus.school.name} {campus.city}
                     </span>
                     <button
                       onClick={() =>
                         setSelected((prev) =>
-                          prev.filter((s) => s.id !== school.id)
+                          prev.filter((c) => c.id !== campus.id)
                         )
                       }
                       style={{
@@ -787,7 +727,7 @@ export function CreatePage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder={
                 selected.length > 0
-                  ? selected.map((s) => s.name).join(' vs ') + ' 比較'
+                  ? selected.map((c) => `${c.school.name} ${c.city}`).join(' vs ') + ' 比較'
                   : '例如：ILAC vs ILSC 2026'
               }
               style={{
