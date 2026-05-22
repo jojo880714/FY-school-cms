@@ -47,7 +47,7 @@ serve(async (req: Request) => {
 
     // 4. 比較表格 rows
     const tableRowDefs = [
-      { label: "城市", fn: (item: any) => item.campuses.map((c: any) => c.city).filter((v: any, i: any, a: any) => a.indexOf(v) === i).join("、") || "—" },
+      { label: "城市", fn: (item: any) => (item.campuses || []).map((c: any) => c.city).filter((v: any, i: any, a: any) => a.indexOf(v) === i).join("、") || "—" },
       { label: "創立年份", fn: (item: any) => item.school.founded ? `${item.school.founded}年` : "—" },
       { label: "英語政策", fn: (item: any) => item.school.english_only_policy ? '<span class="check">✓ English Only</span>' : '<span class="cross">✗ 無強制</span>' },
       { label: "認證", fn: (item: any) => (item.school.accreditation || []).join("、") || "—" },
@@ -136,7 +136,7 @@ serve(async (req: Request) => {
       seenCities.add(c.city);
       return true;
     }).map((c: any) => {
-      const ci = allCityInfo.find((x: any) => x.city.trim().toLowerCase() === c.city.trim().toLowerCase());
+      const ci = allCityInfo.find((x: any) => (x.city || "").trim().toLowerCase() === (c.city || "").trim().toLowerCase());
       return `
       <div class="city-card">
         <div class="city-name">${c.city}</div>
