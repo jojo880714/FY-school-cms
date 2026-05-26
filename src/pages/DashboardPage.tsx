@@ -7,7 +7,8 @@ interface GeneratedPage {
   id: string;
   slug: string;
   title: string | null;
-  school_ids: string[];
+  school_ids: string[] | null;
+  campus_ids: string[] | null;
   selected_fields: Record<string, boolean>;
   advisor_notes: Record<string, string>;
   html_url: string | null;
@@ -180,7 +181,15 @@ export function DashboardPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {pages.map((page) => (
+            {pages.map((page) => {
+              const schoolCount = new Set(page.school_ids ?? []).size;
+              const campusCount = (page.campus_ids ?? []).length;
+              const metaText =
+                schoolCount === 0 && campusCount === 0
+                  ? '舊資料'
+                  : `${schoolCount} 校 / ${campusCount} 校區`;
+              const openUrl = page.public_url || page.html_url;
+              return (
               <div
                 key={page.id}
                 style={{
@@ -203,24 +212,51 @@ export function DashboardPage() {
                   >
                     {page.title || page.slug}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-                    {new Date(page.created_at).toLocaleDateString('zh-TW')}
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: '#9ca3af',
+                      display: 'flex',
+                      gap: '8px',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span>{new Date(page.created_at).toLocaleDateString('zh-TW')}</span>
+                    <span>·</span>
+                    <span>{metaText}</span>
                   </div>
                 </div>
-                <span
-                  style={{
-                    fontSize: '12px',
-                    padding: '3px 10px',
-                    borderRadius: '99px',
-                    background:
-                      page.status === 'published' ? '#d1fae5' : '#f3f4f6',
-                    color: page.status === 'published' ? '#065f46' : '#6b7280',
-                  }}
-                >
-                  {page.status === 'published' ? '已發布' : '草稿'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {openUrl && (
+                    <a
+                      href={openUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: '12px',
+                        color: '#2563eb',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      開啟 ↗
+                    </a>
+                  )}
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      padding: '3px 10px',
+                      borderRadius: '99px',
+                      background:
+                        page.status === 'published' ? '#d1fae5' : '#f3f4f6',
+                      color: page.status === 'published' ? '#065f46' : '#6b7280',
+                    }}
+                  >
+                    {page.status === 'published' ? '已發布' : '草稿'}
+                  </span>
+                </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
