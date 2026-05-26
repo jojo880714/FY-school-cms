@@ -217,19 +217,25 @@ serve(async (req: Request) => {
 
     // 13. 存入資料庫
     console.log("Saving to database...");
-    const { error: dbError } = await supabase
-      .from("generated_pages")
-      .upsert({
-        slug: slug,
-        html_content: html,
-        status: "published",
-      }, { onConflict: "slug" });
-
-    if (dbError) throw new Error("資料庫儲存失敗：" + dbError.message);
-
     const publicUrl = workerUrl
       ? `${workerUrl.replace(/\/$/, "")}/?slug=${encodeURIComponent(slug)}`
       : `${supabaseUrl}/functions/v1/view-page?slug=${encodeURIComponent(slug)}`;
+
+    const { data, error: dbError } = await supabase
+      .from("generated_pages")
+      .update({
+        html_content: html,
+        status: "published",
+        html_url: publicUrl,
+        public_url: publicUrl,
+      })
+      .eq("slug", slug)
+      .select();
+
+    if (dbError) throw new Error("資料庫儲存失敗：" + dbError.message);
+    if (!data || data.length === 0) {
+      throw new Error(`找不到要更新的頁面記錄（slug=${slug}），請確認前台是否已建立 row`);
+    }
 
     console.log("Done. URL:", publicUrl);
     return new Response(

@@ -375,6 +375,21 @@ export function CreatePage() {
         .filter(([, v]) => v)
         .map(([k]) => k);
 
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      await supabase.from('generated_pages').upsert({
+        slug,
+        title: pageTitle,
+        school_ids: selected.map((c) => c.school_id),
+        campus_ids: selected.map((c) => c.id),
+        selected_fields: fields,
+        advisor_notes: notes,
+        status: 'draft',
+        created_by: user?.id,
+      }, { onConflict: 'slug' });
+
       const { data: result, error: fnError } = await supabase.functions.invoke(
         'generate-page',
         {
@@ -388,23 +403,6 @@ export function CreatePage() {
       );
       if (fnError) throw fnError;
       if (!result.success) throw new Error(result.error);
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      await supabase.from('generated_pages').insert({
-        slug,
-        title: pageTitle,
-        school_ids: selected.map((c) => c.school_id),
-        campus_ids: selected.map((c) => c.id),
-        selected_fields: fields,
-        advisor_notes: notes,
-        html_url: result.url,
-        public_url: result.url,
-        status: 'published',
-        created_by: user?.id,
-      });
 
       setResult({ url: result.url });
       localStorage.removeItem(DRAFT_KEY);
