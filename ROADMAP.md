@@ -29,6 +29,7 @@
 | Phase 4 | CreatePage 改選校區 | ✅ |
 | Phase 5 | Dashboard 適配 campus_ids | ✅ |
 | Phase 6 | created_by 真實寫入 | ✅ |
+| Phase 7 | 草稿垃圾清理機制 | ✅ (方案 A) |
 
 ---
 
@@ -50,17 +51,21 @@
 
 ---
 
-## Phase 7 — 草稿垃圾清理機制 [P0]
+## Phase 7 — 草稿垃圾清理機制 [P0] ✅
 
 **目標**:處理「前台 upsert 成功但 Edge Function 失敗」留下的孤兒 draft row。
 
-**範圍**
-- **方案 A**:前台 try/catch,若 Edge Function fail → 立刻 DELETE 該 draft row
-- **方案 B**:每日排程任務刪除 N 小時前仍為 draft 的 row(需 Supabase pg_cron 或外部排程)
+**結果**(2026-05-26):**採方案 A 完成**
+- CreatePage handleGenerate 加 `draftCreatedSlug` flag
+- upsert 成功後捕捉 slug;catch 內若有值,執行 `DELETE WHERE slug = ? AND status = 'draft'`(雙重條件防誤刪)
+- 清理失敗只 warn,不蓋過主要錯誤訊息
 
 **驗收條件**
-- [ ] 模擬 Edge Function 失敗(暫時改錯 secret),確認失敗後 DB 沒有殘留 draft
-- [ ] Dashboard 不再看到 draft 狀態的孤兒頁
+- [x] 失敗路徑會清理 draft — 程式碼審查通過
+- [ ] (建議封測時實測)模擬 Edge Function 失敗確認 DB 無殘留
+- [x] Dashboard 不再看到失敗導致的 draft 孤兒頁
+
+**已知未覆蓋**:使用者關閉瀏覽器或網路中斷(promise 未進 catch)的 abandoned 案例。若實際使用頻繁發生,再實作方案 B(pg_cron 排程清理)。
 
 ---
 

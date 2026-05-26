@@ -347,6 +347,7 @@ export function CreatePage() {
   async function handleGenerate() {
     if (selected.length === 0) return;
     setGenerating(true);
+    let draftCreatedSlug: string | null = null;
     try {
       const { data: programData } = await supabase.from('programs').select('*');
       const { data: tuitionData } = await supabase
@@ -394,6 +395,7 @@ export function CreatePage() {
         status: 'draft',
         created_by: user.id,
       }, { onConflict: 'slug' });
+      draftCreatedSlug = slug;
 
       const { data: result, error: fnError } = await supabase.functions.invoke(
         'generate-page',
@@ -412,6 +414,17 @@ export function CreatePage() {
       setResult({ url: result.url });
       localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
+      if (draftCreatedSlug) {
+        try {
+          await supabase
+            .from('generated_pages')
+            .delete()
+            .eq('slug', draftCreatedSlug)
+            .eq('status', 'draft');
+        } catch (cleanupErr) {
+          console.warn('清理 draft 失敗（不影響主要錯誤回報）:', cleanupErr);
+        }
+      }
       console.error(err);
       alert('產生失敗：' + String(err));
     } finally {
