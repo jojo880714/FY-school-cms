@@ -379,6 +379,11 @@ export function CreatePage() {
         data: { user },
       } = await supabase.auth.getUser();
 
+      if (!user) {
+        alert('登入狀態異常，請重新登入');
+        return;
+      }
+
       await supabase.from('generated_pages').upsert({
         slug,
         title: pageTitle,
@@ -387,7 +392,7 @@ export function CreatePage() {
         selected_fields: fields,
         advisor_notes: notes,
         status: 'draft',
-        created_by: user?.id,
+        created_by: user.id,
       }, { onConflict: 'slug' });
 
       const { data: result, error: fnError } = await supabase.functions.invoke(

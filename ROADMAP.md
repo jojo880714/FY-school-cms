@@ -28,22 +28,25 @@
 | Phase 3 | campuses 表擴充 | ✅(隱性,無 migration 文件) |
 | Phase 4 | CreatePage 改選校區 | ✅ |
 | Phase 5 | Dashboard 適配 campus_ids | ✅ |
+| Phase 6 | created_by 真實寫入 | ✅ |
 
 ---
 
-## Phase 6 — created_by 真實寫入 [P0]
+## Phase 6 — created_by 真實寫入 [P0] ✅
 
 **目標**:`generated_pages.created_by` 寫入真實 user id,而非 NULL。為未來「顧問只看自己頁面」鋪路。
 
-**範圍**
-- CreatePage upsert 時帶入 `user.id`(Phase 4 已加入,但需確認 Edge Function update 不會覆寫)
-- 確認所有寫入路徑都有帶 user id
-- (選配)RLS 加入 `created_by` 過濾的次要 policy(預設仍維持團隊共享)
+**結果**(2026-05-26):**已完成**
+- Phase 4 寫入流程修復時順手加入 `created_by: user.id`,實證 `ilac-toronto-ilac-vancouver-0079` 的 `created_by` 為真實 user id `d457b4a4-...`
+- 補強:CreatePage 加 `if (!user) { alert + return }` guard,防止 session 過期時靜默寫 NULL
+- `user?.id` 簡化為 `user.id`(guard 後 TypeScript 已知非空)
 
 **驗收條件**
-- [ ] 新產生的頁面 `created_by` 欄為產生者 user id,非 NULL
-- [ ] Dashboard 開啟時帶 `auth.uid()` 查得到自己的頁面
-- [ ] 舊資料 `created_by` 為 NULL 不影響顯示
+- [x] 新產生的頁面 `created_by` 欄為產生者 user id,非 NULL — 已實證
+- [x] 舊資料 `created_by` 為 NULL 不影響顯示 — 已實證(Dashboard 不過濾此欄)
+- [ ] (選配,延後)Dashboard 帶 `auth.uid()` 查得到自己頁面 — 目前團隊共享 RLS,不需特別處理
+
+**遺留**:13 筆舊資料 `created_by` 為 NULL,無從反推誰建,維持 NULL。
 
 ---
 
