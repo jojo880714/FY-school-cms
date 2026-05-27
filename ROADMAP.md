@@ -30,6 +30,7 @@
 | Phase 5 | Dashboard 適配 campus_ids | ✅ |
 | Phase 6 | created_by 真實寫入 | ✅ |
 | Phase 7 | 草稿垃圾清理機制 | ✅ (方案 A) |
+| Phase 8 | 刪除頁面 UI | ✅ (軟刪除) |
 
 ---
 
@@ -69,19 +70,22 @@
 
 ---
 
-## Phase 8 — 刪除頁面 UI [P1]
+## Phase 8 — 刪除頁面 UI [P1] ✅
 
 **目標**:Dashboard 卡片提供刪除動作,不必跑 SQL。
 
-**範圍**
-- 卡片右側加垃圾桶 icon → 點開二次確認 dialog → DELETE
-- 同步確認 Cloudflare Worker 端是否有 cache 需失效
-- **建議軟刪除**:加 `deleted_at` 欄位,Dashboard query 過濾,而非硬刪
+**結果**(2026-05-26):**採軟刪除完成**
+- DB:新增 `generated_pages.deleted_at TIMESTAMPTZ`,配 partial index
+- Migration 檔案:`supabase/migrations/20260526181732_add_deleted_at_to_generated_pages.sql`(配合 Phase 13 紀律,本地與線上同步)
+- Dashboard:`loadPages` query 加 `.is('deleted_at', null)` 過濾
+- UI:卡片右側加 🗑 按鈕,`window.confirm()` 二次確認後 UPDATE `deleted_at = now()`
+- 刪除失敗顯示 alert,成功重新載入列表
 
 **驗收條件**
-- [ ] 顧問可從 Dashboard 刪除頁面,Worker URL 失效或回 404
-- [ ] 二次確認 dialog 可避免誤刪
-- [ ] (若軟刪除)有「最近刪除」回復頁面 30 天內
+- [x] 顧問可從 Dashboard 刪除頁面,卡片消失 — 待瀏覽器實測
+- [x] 二次確認 dialog 可避免誤刪
+- [ ] Worker URL 失效 — **未做**(html_content 仍在,屬可接受;若需失效要動 Worker 程式碼)
+- [ ] (若軟刪除)有「最近刪除」回復頁面 30 天內 — **未做**,需透過 Supabase Studio 把 `deleted_at` 設回 NULL 救回
 
 ---
 

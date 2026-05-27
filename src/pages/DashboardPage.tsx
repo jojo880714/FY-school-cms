@@ -16,6 +16,7 @@ interface GeneratedPage {
   status: string;
   created_by: string;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export function DashboardPage() {
@@ -32,10 +33,29 @@ export function DashboardPage() {
     const { data } = await supabase
       .from('generated_pages')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(20);
     if (data) setPages(data as GeneratedPage[]);
     setLoading(false);
+  }
+
+  async function handleDelete(id: string, label: string) {
+    const ok = window.confirm(
+      `確定要刪除「${label}」嗎？\n\n` +
+        `Dashboard 將不再顯示此頁面（軟刪除，可從 Supabase Studio 救回）。\n` +
+        `Worker URL 仍可訪問，如需完全失效請另外處理。`
+    );
+    if (!ok) return;
+    const { error } = await supabase
+      .from('generated_pages')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) {
+      alert('刪除失敗：' + error.message);
+      return;
+    }
+    await loadPages();
   }
 
   return (
@@ -253,6 +273,23 @@ export function DashboardPage() {
                   >
                     {page.status === 'published' ? '已發布' : '草稿'}
                   </span>
+                  <button
+                    onClick={() => handleDelete(page.id, page.title || page.slug)}
+                    title="刪除"
+                    aria-label="刪除"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#9ca3af',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    🗑
+                  </button>
                 </div>
               </div>
               );
