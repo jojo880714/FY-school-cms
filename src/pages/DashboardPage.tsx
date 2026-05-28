@@ -41,11 +41,7 @@ export function DashboardPage() {
   }
 
   async function handleDelete(id: string, label: string) {
-    const ok = window.confirm(
-      `確定要刪除「${label}」嗎？\n\n` +
-        `Dashboard 將不再顯示此頁面（軟刪除，可從 Supabase Studio 救回）。\n` +
-        `Worker URL 仍可訪問，如需完全失效請另外處理。`
-    );
+    const ok = window.confirm(`確定要刪除「${label}」嗎？`);
     if (!ok) return;
     const { error } = await supabase
       .from('generated_pages')
