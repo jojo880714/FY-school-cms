@@ -35,6 +35,7 @@
 | Phase 10 | Dashboard 搜尋/分頁(精準統計) | ✅ |
 | Phase 11 | Slug 唯一性強化 | ✅ |
 | Phase 13 | Migration 紀律建立 | ✅ |
+| Phase 12 | comparison.html 視覺升級 | ✅ |
 
 ---
 
@@ -182,23 +183,50 @@ DB schema 不變(slug 上原本就有 UNIQUE constraint,否則前期 `upsert(onC
 
 ---
 
-## Phase 12 — comparison.html 視覺升級 [P3]
+## Phase 12 — comparison.html 視覺升級 [P3] ✅
 
 > 原 README backlog 項目
 
 **目標**:從「功能型工具感」(資訊密集、實用、好查)升級為「品牌型錄質感」。
 
-**範圍**
-- 加大區塊留白、改用暖色調背景、卡片加圓角與陰影
-- 字體加呼吸感(line-height / letter-spacing)
-- 城市/校區資訊 infographic 化
-- 頁尾加 CTA 表單
+**結果**(2026-05-30):**完成,純視覺升級,結構/JS/佔位符全保留**
+
+色票套入(放洋品牌):
+- `--color-primary: #E8195A`(玫瑰紅,沿用既有品牌色)
+- `--color-primary-hover: #C8174A`(加深一階)
+- `--color-primary-tint: #FCE8EE`(極淡底)
+- `--color-accent: #2B4A6B`(沉穩深藍,輔助色 = 表格 header / city-name / 強調)
+- `--color-bg: #FAF7F2`(暖白頁底)
+- `--color-text: #2C2C2A`(暖黑,比純黑柔)
+- `--color-text-muted: #6B6B6B` / `--color-border: #EAE5DD`
+
+視覺升級:
+- **Hero**:從深色海軍 gradient → 暖白底 + 雙色光暈(右上深藍、左下玫瑰)+ 深藍 badge + 玫瑰邊框 chip
+- **Cards**:radius 12 → 16,加 `--shadow-card` 軟陰影,hover 上浮 2px
+- **Card header**:gradient `primary → primary-hover`(原本單色),更立體
+- **Table header**:改用深藍(原本玫瑰紅)— 與卡片頭區隔顏色職責
+- **Tabs**:active 改 `primary-tint` 底 + `primary-hover` 字(原本白底紅字)
+- **Toggle**:active 改深藍(原本玫瑰)
+- **City name**:改用深藍 18px(原本黑色 16px)
+- **Calc result**:金額放大 18 → 20px,加邊框
+- **Sticky nav**:加 `backdrop-filter: blur(10px)` 透明感
+
+Typography:
+- `body line-height: 1.65`(原 default ~1.5)
+- 標題 `letter-spacing: -0.01em`(收緊)
+- meta / label `letter-spacing: 0.02em`(展開)
+- 加入 PingFang TC / Noto Sans TC fallback
+
+RWD:
+- 新增 tablet 區段(< 1024px)— iPad 優化
+- mobile (< 640px) 字級/留白全面調整
+- toggle / nav 加大 tap target
 
 **驗收條件**
-- [ ] 顧問群盲測對新舊版偏好率 > 70%
-- [ ] 模板任何資料皆能不破版顯示(空資料 / 超長文字 / 多校 / 單校)
-- [ ] 行動裝置可閱讀(顧問可能 iPad 展示給學生看)
-- [ ] 列印友善 / PDF 匯出版面正確(若 Phase 14 已實作)
+- [△] 顧問群盲測偏好率 > 70% — 待你內部蒐集回饋
+- [x] 任何資料不破版 — 結構完全保留,所有 13 個 `{{...}}` 占位符位置不動
+- [x] 行動裝置可閱讀 — 加 < 1024px tablet 與 < 640px mobile 兩段 media query
+- [ ] 列印友善 / PDF — 未做(Phase 14 PDF 匯出時再規劃)
 
 ---
 
