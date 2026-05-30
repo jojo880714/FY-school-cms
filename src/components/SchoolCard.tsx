@@ -32,8 +32,8 @@ export function SchoolCard({ school, selected, disabled, onToggle }: Props) {
         textAlign: 'left',
         padding: '14px 16px',
         borderRadius: '12px',
-        border: selected ? '2px solid #C41E3A' : '1px solid #e5e7eb',
-        background: selected ? '#fdf0f2' : disabled ? '#f9fafb' : 'white',
+        border: selected ? '2px solid #E8195A' : '1px solid #EAE5DD',
+        background: selected ? '#FCE8EE' : disabled ? '#FAF7F2' : 'white',
         cursor: disabled && !selected ? 'not-allowed' : 'pointer',
         opacity: disabled && !selected ? 0.5 : 1,
         transition: 'all .15s',
@@ -57,7 +57,7 @@ export function SchoolCard({ school, selected, disabled, onToggle }: Props) {
             }}
           >
             <span
-              style={{ fontWeight: '600', fontSize: '14px', color: '#111827' }}
+              style={{ fontWeight: '600', fontSize: '14px', color: '#2C2C2A' }}
             >
               {school.name}
             </span>
@@ -70,7 +70,7 @@ export function SchoolCard({ school, selected, disabled, onToggle }: Props) {
           <p
             style={{
               fontSize: '12px',
-              color: '#6b7280',
+              color: '#6B6B6B',
               margin: '0 0 8px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -88,7 +88,7 @@ export function SchoolCard({ school, selected, disabled, onToggle }: Props) {
                   padding: '2px 8px',
                   borderRadius: '99px',
                   background: '#f3f4f6',
-                  color: '#374151',
+                  color: '#2C2C2A',
                 }}
               >
                 {city}
@@ -115,7 +115,7 @@ export function SchoolCard({ school, selected, disabled, onToggle }: Props) {
             height: '22px',
             borderRadius: '50%',
             border: selected ? 'none' : '1.5px solid #d1d5db',
-            background: selected ? '#C41E3A' : 'transparent',
+            background: selected ? '#E8195A' : 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

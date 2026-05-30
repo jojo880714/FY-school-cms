@@ -25,7 +25,7 @@ export function FieldSelector({ selected, onChange }: Props) {
           <div
             key={group.label}
             style={{
-              border: '1px solid #e5e7eb',
+              border: '1px solid #EAE5DD',
               borderRadius: '10px',
               overflow: 'hidden',
             }}
@@ -43,7 +43,7 @@ export function FieldSelector({ selected, onChange }: Props) {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                background: '#f9fafb',
+                background: '#FAF7F2',
                 border: 'none',
                 cursor: 'pointer',
                 textAlign: 'left',
@@ -60,7 +60,7 @@ export function FieldSelector({ selected, onChange }: Props) {
                   keys.forEach((k) => onChange(k, e.target.checked));
                 }}
                 onClick={(e) => e.stopPropagation()}
-                style={{ accentColor: '#C41E3A' }}
+                style={{ accentColor: '#E8195A' }}
               />
               <span style={{ fontSize: '13px', fontWeight: '500', flex: 1 }}>
                 {group.label}
@@ -98,14 +98,14 @@ export function FieldSelector({ selected, onChange }: Props) {
                       gap: '8px',
                       cursor: 'pointer',
                       fontSize: '13px',
-                      color: '#374151',
+                      color: '#2C2C2A',
                     }}
                   >
                     <input
                       type="checkbox"
                       checked={!!selected[field.key]}
                       onChange={(e) => onChange(field.key, e.target.checked)}
-                      style={{ accentColor: '#C41E3A' }}
+                      style={{ accentColor: '#E8195A' }}
                     />
                     {field.label}
                   </label>

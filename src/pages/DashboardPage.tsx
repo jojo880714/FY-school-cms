@@ -119,11 +119,11 @@ export function DashboardPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: '#FAF7F2' }}>
       <header
         style={{
           background: 'white',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid #EAE5DD',
           padding: '0 24px',
           height: '56px',
           display: 'flex',
@@ -141,14 +141,14 @@ export function DashboardPage() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontSize: '13px', color: '#6b7280' }}>
+          <span style={{ fontSize: '13px', color: '#6B6B6B' }}>
             {user?.email}
           </span>
           <button
             onClick={signOut}
             style={{
               fontSize: '13px',
-              color: '#6b7280',
+              color: '#6B6B6B',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -179,7 +179,7 @@ export function DashboardPage() {
               key={label}
               style={{
                 background: 'white',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #EAE5DD',
                 borderRadius: '12px',
                 padding: '16px',
               }}
@@ -187,7 +187,7 @@ export function DashboardPage() {
               <div
                 style={{
                   fontSize: '12px',
-                  color: '#6b7280',
+                  color: '#6B6B6B',
                   marginBottom: '4px',
                 }}
               >
@@ -205,7 +205,7 @@ export function DashboardPage() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            background: '#C41E3A',
+            background: '#E8195A',
             color: 'white',
             borderRadius: '12px',
             padding: '14px',
@@ -231,7 +231,7 @@ export function DashboardPage() {
             style={{
               fontSize: '13px',
               fontWeight: '600',
-              color: '#374151',
+              color: '#2C2C2A',
               whiteSpace: 'nowrap',
             }}
           >
@@ -249,7 +249,7 @@ export function DashboardPage() {
               maxWidth: '280px',
               padding: '6px 10px',
               fontSize: '13px',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #EAE5DD',
               borderRadius: '8px',
               outline: 'none',
             }}
@@ -275,7 +275,7 @@ export function DashboardPage() {
             <div style={{ fontSize: '32px', marginBottom: '12px' }}>
               {debouncedSearch ? '🔍' : '📄'}
             </div>
-            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+            <p style={{ fontSize: '14px', color: '#6B6B6B', margin: 0 }}>
               {debouncedSearch
                 ? `找不到包含「${debouncedSearch}」的頁面`
                 : '還沒有任何比較頁面，點上方按鈕建立第一個'}
@@ -303,7 +303,7 @@ export function DashboardPage() {
                 key={page.id}
                 style={{
                   background: 'white',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid #EAE5DD',
                   borderRadius: '12px',
                   padding: '16px',
                   display: 'flex',
@@ -349,7 +349,7 @@ export function DashboardPage() {
                       rel="noopener noreferrer"
                       style={{
                         fontSize: '12px',
-                        color: '#2563eb',
+                        color: '#2B4A6B',
                         textDecoration: 'none',
                       }}
                     >
@@ -363,7 +363,7 @@ export function DashboardPage() {
                       borderRadius: '99px',
                       background:
                         page.status === 'published' ? '#d1fae5' : '#f3f4f6',
-                      color: page.status === 'published' ? '#065f46' : '#6b7280',
+                      color: page.status === 'published' ? '#065f46' : '#6B6B6B',
                     }}
                   >
                     {page.status === 'published' ? '已發布' : '草稿'}
@@ -415,7 +415,7 @@ export function DashboardPage() {
               alignItems: 'center',
               marginTop: '16px',
               fontSize: '13px',
-              color: '#6b7280',
+              color: '#6B6B6B',
             }}
           >
             <span>
@@ -429,7 +429,7 @@ export function DashboardPage() {
                 style={{
                   padding: '6px 12px',
                   fontSize: '13px',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid #EAE5DD',
                   background: 'white',
                   borderRadius: '8px',
                   cursor: pageIdx === 0 ? 'not-allowed' : 'pointer',
@@ -444,7 +444,7 @@ export function DashboardPage() {
                 style={{
                   padding: '6px 12px',
                   fontSize: '13px',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid #EAE5DD',
                   background: 'white',
                   borderRadius: '8px',
                   cursor:

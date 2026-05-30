@@ -40,8 +40,8 @@ function CampusCard({
     <div
       onClick={() => !disabled || selected ? onToggle(campus) : null}
       style={{
-        border: selected ? '2px solid #C41E3A' : '1px solid #e5e7eb',
-        background: selected ? '#fdf0f2' : disabled ? '#f9fafb' : 'white',
+        border: selected ? '2px solid #E8195A' : '1px solid #EAE5DD',
+        background: selected ? '#FCE8EE' : disabled ? '#FAF7F2' : 'white',
         cursor: disabled && !selected ? 'not-allowed' : 'pointer',
         opacity: disabled && !selected ? 0.5 : 1,
         borderRadius: 12,
@@ -49,10 +49,10 @@ function CampusCard({
         transition: 'all 0.15s',
       }}
     >
-      <div style={{ fontWeight: 700, fontSize: 16, color: '#111', marginBottom: 4 }}>
+      <div style={{ fontWeight: 700, fontSize: 16, color: '#2C2C2A', marginBottom: 4 }}>
         {campus.school.name}
       </div>
-      <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+      <div style={{ fontSize: 13, color: '#6B6B6B', marginBottom: 8 }}>
         {campus.city}
       </div>
       {campus.metro_station && (
@@ -65,8 +65,8 @@ function CampusCard({
         style={{
           marginTop: 10,
           border: selected ? 'none' : '1.5px solid #d1d5db',
-          background: selected ? '#C41E3A' : 'transparent',
-          color: selected ? 'white' : '#6b7280',
+          background: selected ? '#E8195A' : 'transparent',
+          color: selected ? 'white' : '#6B6B6B',
           borderRadius: 6,
           padding: '4px 10px',
           fontSize: 12,
@@ -102,7 +102,7 @@ function FieldSelector({
           <div
             key={group.label}
             style={{
-              border: '1px solid #e5e7eb',
+              border: '1px solid #EAE5DD',
               borderRadius: '10px',
               overflow: 'hidden',
             }}
@@ -120,7 +120,7 @@ function FieldSelector({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                background: '#f9fafb',
+                background: '#FAF7F2',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -136,7 +136,7 @@ function FieldSelector({
                   keys.forEach((k) => onChange(k, e.target.checked));
                 }}
                 onClick={(e) => e.stopPropagation()}
-                style={{ accentColor: '#C41E3A' }}
+                style={{ accentColor: '#E8195A' }}
               />
               <span style={{ fontSize: '13px', fontWeight: '500', flex: 1 }}>
                 {group.label}
@@ -173,7 +173,7 @@ function FieldSelector({
                       type="checkbox"
                       checked={!!selected[field.key]}
                       onChange={(e) => onChange(field.key, e.target.checked)}
-                      style={{ accentColor: '#C41E3A' }}
+                      style={{ accentColor: '#E8195A' }}
                     />
                     {field.label}
                   </label>
@@ -211,7 +211,7 @@ function AdvisorNotes({
                 marginBottom: '6px',
               }}
             >
-              對 <span style={{ color: '#111' }}>{campus.school.name} {campus.city}</span> 的備注{' '}
+              對 <span style={{ color: '#2C2C2A' }}>{campus.school.name} {campus.city}</span> 的備注{' '}
               <span style={{ color: '#9ca3af', fontWeight: '400' }}>
                 （顯示在頁面上）
               </span>
@@ -228,7 +228,7 @@ function AdvisorNotes({
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid #EAE5DD',
                   fontSize: '13px',
                   outline: 'none',
                   resize: 'none',
@@ -500,7 +500,7 @@ export function CreatePage() {
       <div
         style={{
           minHeight: '100vh',
-          background: '#f9fafb',
+          background: '#FAF7F2',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -514,7 +514,7 @@ export function CreatePage() {
             {editSlug ? '頁面更新完成！' : '頁面產生完成！'}
           </h2>
           <p
-            style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}
+            style={{ fontSize: '14px', color: '#6B6B6B', marginBottom: '20px' }}
           >
             可以直接複製連結傳給學生
           </p>
@@ -526,7 +526,7 @@ export function CreatePage() {
               marginBottom: '16px',
               wordBreak: 'break-all',
               fontSize: '13px',
-              color: '#C41E3A',
+              color: '#E8195A',
               textAlign: 'left',
             }}
           >
@@ -544,7 +544,7 @@ export function CreatePage() {
               style={{
                 padding: '10px 20px',
                 borderRadius: '10px',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #EAE5DD',
                 background: 'white',
                 fontSize: '14px',
                 cursor: 'pointer',
@@ -558,7 +558,7 @@ export function CreatePage() {
                 padding: '10px 20px',
                 borderRadius: '10px',
                 border: 'none',
-                background: '#C41E3A',
+                background: '#E8195A',
                 color: 'white',
                 fontSize: '14px',
                 cursor: 'pointer',
@@ -572,11 +572,11 @@ export function CreatePage() {
     );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: '#FAF7F2' }}>
       <header
         style={{
           background: 'white',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid #EAE5DD',
           padding: '0 20px',
           height: '52px',
           display: 'flex',
@@ -589,7 +589,7 @@ export function CreatePage() {
       >
         <Link
           to="/dashboard"
-          style={{ fontSize: '13px', color: '#6b7280', textDecoration: 'none' }}
+          style={{ fontSize: '13px', color: '#6B6B6B', textDecoration: 'none' }}
         >
           ← 返回
         </Link>
@@ -613,7 +613,7 @@ export function CreatePage() {
                 fontSize: '12px',
                 padding: '6px 12px',
                 borderRadius: '8px',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #EAE5DD',
                 background: 'white',
                 cursor: 'pointer',
               }}
@@ -650,7 +650,7 @@ export function CreatePage() {
                 padding: '3px 10px',
                 borderRadius: '99px',
                 background: selected.length >= MAX ? '#fef3c7' : '#f3f4f6',
-                color: selected.length >= MAX ? '#92400e' : '#6b7280',
+                color: selected.length >= MAX ? '#92400e' : '#6B6B6B',
               }}
             >
               {selected.length} / {MAX}
@@ -712,7 +712,7 @@ export function CreatePage() {
             {selected.length === 0 ? (
               <div
                 style={{
-                  border: '1.5px dashed #e5e7eb',
+                  border: '1.5px dashed #EAE5DD',
                   borderRadius: '12px',
                   padding: '24px',
                   textAlign: 'center',
@@ -734,7 +734,7 @@ export function CreatePage() {
                       alignItems: 'center',
                       gap: '8px',
                       background: 'white',
-                      border: '1px solid #e5e7eb',
+                      border: '1px solid #EAE5DD',
                       borderRadius: '10px',
                       padding: '10px 12px',
                     }}
@@ -744,7 +744,7 @@ export function CreatePage() {
                         width: '20px',
                         height: '20px',
                         borderRadius: '50%',
-                        background: '#C41E3A',
+                        background: '#E8195A',
                         color: 'white',
                         fontSize: '11px',
                         display: 'flex',
@@ -815,7 +815,7 @@ export function CreatePage() {
                 width: '100%',
                 padding: '10px 14px',
                 borderRadius: '8px',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #EAE5DD',
                 fontSize: '13px',
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -883,7 +883,7 @@ export function CreatePage() {
               style={{
                 width: '100%',
                 background:
-                  selected.length === 0 || generating ? '#9ca3af' : '#C41E3A',
+                  selected.length === 0 || generating ? '#9ca3af' : '#E8195A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '12px',

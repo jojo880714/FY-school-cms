@@ -30,7 +30,7 @@ export function LoginPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f9fafb',
+        background: '#FAF7F2',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -45,7 +45,7 @@ export function LoginPage() {
           >
             語言學校比較系統
           </h1>
-          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+          <p style={{ fontSize: '14px', color: '#6B6B6B', margin: 0 }}>
             顧問後台管理
           </p>
         </div>
@@ -53,7 +53,7 @@ export function LoginPage() {
           style={{
             background: 'white',
             borderRadius: '16px',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #EAE5DD',
             padding: '32px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           }}
@@ -135,7 +135,7 @@ export function LoginPage() {
               disabled={loading}
               style={{
                 width: '100%',
-                background: loading ? '#9ca3af' : '#C41E3A',
+                background: loading ? '#9ca3af' : '#E8195A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '10px',

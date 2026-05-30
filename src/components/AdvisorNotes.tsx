@@ -23,11 +23,11 @@ export function AdvisorNotes({ schools, notes, onChange }: Props) {
                 display: 'block',
                 fontSize: '12px',
                 fontWeight: '500',
-                color: '#374151',
+                color: '#2C2C2A',
                 marginBottom: '6px',
               }}
             >
-              對 <span style={{ color: '#111827' }}>{school.name}</span> 的備注
+              對 <span style={{ color: '#2C2C2A' }}>{school.name}</span> 的備注
               <span style={{ color: '#9ca3af', fontWeight: '400' }}>
                 {' '}
                 （顯示在頁面上）
@@ -45,7 +45,7 @@ export function AdvisorNotes({ schools, notes, onChange }: Props) {
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid #EAE5DD',
                   fontSize: '13px',
                   outline: 'none',
                   resize: 'none',

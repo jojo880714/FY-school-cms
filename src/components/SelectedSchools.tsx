@@ -47,7 +47,7 @@ function SortableItem({
         alignItems: 'center',
         gap: '8px',
         background: 'white',
-        border: '1px solid #e5e7eb',
+        border: '1px solid #EAE5DD',
         borderRadius: '10px',
         padding: '10px 12px',
       }}
@@ -72,7 +72,7 @@ function SortableItem({
           width: '20px',
           height: '20px',
           borderRadius: '50%',
-          background: '#C41E3A',
+          background: '#E8195A',
           color: 'white',
           fontSize: '11px',
           display: 'flex',
@@ -133,7 +133,7 @@ export function SelectedSchools({ schools, onReorder, onRemove }: Props) {
         {schools.length === 0 ? (
           <div
             style={{
-              border: '1.5px dashed #e5e7eb',
+              border: '1.5px dashed #EAE5DD',
               borderRadius: '12px',
               padding: '24px',
               textAlign: 'center',
