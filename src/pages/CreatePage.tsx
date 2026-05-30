@@ -403,9 +403,10 @@ export function CreatePage() {
       }));
 
       // 編輯模式:沿用既有 slug;建立模式:生新 slug
+      // 隨機後綴:6 碼 base36（約 2B 組合，雙 Math.random 串接避免短字串）
       const slug =
         editSlug ||
-        `${selected.map((c) => `${c.school.name.toLowerCase()}-${c.city.toLowerCase()}`).join('-')}-${Date.now().toString().slice(-4)}`;
+        `${selected.map((c) => `${c.school.name.toLowerCase()}-${c.city.toLowerCase()}`).join('-')}-${(Math.random().toString(36) + Math.random().toString(36)).slice(2, 8)}`;
       const pageTitle = title || selected.map((c) => `${c.school.name} ${c.city}`).join(' vs ') + ' 比較 2026';
       const selectedFieldLabels = Object.entries(fields)
         .filter(([, v]) => v)
@@ -436,17 +437,26 @@ export function CreatePage() {
         if (updErr) throw updErr;
         // 編輯模式不追蹤 draft（既有頁本來就 published）
       } else {
-        // 建立模式:UPSERT,status=draft,Edge Function 後續 update 成 published
-        await supabase.from('generated_pages').upsert({
-          slug,
-          title: pageTitle,
-          school_ids: selected.map((c) => c.school_id),
-          campus_ids: selected.map((c) => c.id),
-          selected_fields: fields,
-          advisor_notes: notes,
-          status: 'draft',
-          created_by: user.id,
-        }, { onConflict: 'slug' });
+        // 建立模式:INSERT,status=draft,Edge Function 後續 update 成 published
+        // 用 INSERT 而非 UPSERT,讓 slug 碰撞時拋明確錯誤(23505)而非靜默覆蓋
+        const { error: insertErr } = await supabase
+          .from('generated_pages')
+          .insert({
+            slug,
+            title: pageTitle,
+            school_ids: selected.map((c) => c.school_id),
+            campus_ids: selected.map((c) => c.id),
+            selected_fields: fields,
+            advisor_notes: notes,
+            status: 'draft',
+            created_by: user.id,
+          });
+        if (insertErr) {
+          if (insertErr.code === '23505') {
+            throw new Error('slug 碰撞（極罕見），請重新嘗試');
+          }
+          throw insertErr;
+        }
         draftCreatedSlug = slug;
       }
 

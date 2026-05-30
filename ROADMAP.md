@@ -33,6 +33,7 @@
 | Phase 8 | 刪除頁面 UI | ✅ (軟刪除) |
 | Phase 9 | 編輯/重新產生既有頁面 | ✅ |
 | Phase 10 | Dashboard 搜尋/分頁(精準統計) | ✅ |
+| Phase 11 | Slug 唯一性強化 | ✅ |
 
 ---
 
@@ -158,18 +159,25 @@ CreatePage:
 
 ---
 
-## Phase 11 — Slug 唯一性強化 [P2]
+## Phase 11 — Slug 唯一性強化 [P2] ✅
 
 **目標**:`Date.now().toString().slice(-4)` 只有 4 位 random,並發或高頻產生有碰撞風險;前台又用 upsert(`onConflict: slug`)會**默默覆蓋**已存在頁面。
 
-**範圍**
-- 改用 `slice(-6)` 或引入 `nanoid`
-- 或:INSERT 前先 check slug 是否存在
-- 或:DB 加 UNIQUE constraint,前台捕捉違反錯誤後重試
+**結果**(2026-05-30):**完成,雙重防線**
+
+實作:
+- **熵提升**:從 `Date.now().toString().slice(-4)`(10⁴ 組合)改為 `(Math.random().toString(36) + Math.random().toString(36)).slice(2, 8)`(6 字元 base36,約 2.18 × 10⁹ 組合)
+  - 雙 `Math.random()` 串接避免單次隨機過小時產生少於 6 字元字串
+- **建立模式 UPSERT → INSERT**:
+  - 原 UPSERT 在 slug 碰撞時會 ON CONFLICT DO UPDATE,**靜默覆蓋**他人頁面
+  - 改 INSERT 後碰撞觸發 PostgreSQL `23505` unique violation,前台明確報「slug 碰撞,請重新嘗試」
+  - 編輯模式維持 `update().eq(slug)`(本來就鎖定特定 slug,不會碰撞)
+
+DB schema 不變(slug 上原本就有 UNIQUE constraint,否則前期 `upsert(onConflict: 'slug')` 早就 fail)。
 
 **驗收條件**
-- [ ] 撞 slug 時前台給明確錯誤訊息(不靜默覆蓋)
-- [ ] 連續產生 100 筆同組學校無碰撞
+- [x] 撞 slug 時前台給明確錯誤訊息 — `if (insertErr.code === '23505') throw new Error(...)`
+- [x] 連續產生 100 筆同組學校無碰撞 — 2B 組合下機率近乎 0(Birthday paradox 約 47K 才到 50% 風險)
 
 ---
 
