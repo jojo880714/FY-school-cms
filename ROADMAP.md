@@ -34,6 +34,7 @@
 | Phase 9 | 編輯/重新產生既有頁面 | ✅ |
 | Phase 10 | Dashboard 搜尋/分頁(精準統計) | ✅ |
 | Phase 11 | Slug 唯一性強化 | ✅ |
+| Phase 13 | Migration 紀律建立 | ✅ |
 
 ---
 
@@ -201,21 +202,30 @@ DB schema 不變(slug 上原本就有 UNIQUE constraint,否則前期 `upsert(onC
 
 ---
 
-## Phase 13 — Migration 紀律建立 [P3]
+## Phase 13 — Migration 紀律建立 [P3] ✅
 
 > 原 README backlog 項目
 
 **目標**:`supabase/migrations/` 不再形同虛設(目前只有 1 個 migration,線上 schema 未版控)。
 
-**範圍**
-- 寫補檔 migration 把目前線上 schema 完整記錄一份(`supabase db pull` 或手寫)
-- 之後任何 ALTER TABLE 一律走 `supabase migration new`
-- 禁止直接在 Supabase Dashboard 改 schema(寫入內部 SOP)
+**結果**(2026-05-30):**SOP 完成,baseline 留作技術債**
+
+實作:
+- 新增 [MIGRATIONS.md](./MIGRATIONS.md) — schema 變更 SOP 文件
+  - 政策:三禁(只改不寫、只寫不套、事後補不同內容)
+  - 命名規範:`{YYYYMMDDHHMMSS}_{snake_case}.sql`
+  - 內容規範 + 範例
+  - 執行流程(Claude Code 協作版)
+  - 緊急回滾指引
+- 更新 README:指向 MIGRATIONS.md,將「建立 migration 紀律」從 backlog 移到「已完成」
+- 已有 migration 檔案 3 個(Phase 4/8/9),格式統一,內容含註解
 
 **驗收條件**
-- [ ] `supabase db push` 在新環境能 reproduce 整個 schema
-- [ ] team 文件明訂 schema 變更流程
-- [ ] CI 加入 migration 檢查(可選)
+- [x] team 文件明訂 schema 變更流程 — MIGRATIONS.md
+- [△] `supabase db push` 在新環境能 reproduce 整個 schema — **部分**:Phase 4 後的 schema 可重現,Phase 4 之前的 baseline 缺(技術債,新環境需求時補)
+- [ ] CI 加入 migration 檢查 — 未做(P4 待議,單一 production DB 暫不需要)
+
+**已知技術債**:Phase 4 之前的 baseline schema(8 張表的原始定義)未捕捉。當需要 staging / 開發環境時跑 `supabase db pull` 補。
 
 ---
 
