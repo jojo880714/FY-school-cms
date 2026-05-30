@@ -20,25 +20,88 @@ interface GeneratedPage {
   deleted_at: string | null;
 }
 
+const PAGE_SIZE = 20;
+
 export function DashboardPage() {
   const { user, signOut } = useAuth();
   const [pages, setPages] = useState<GeneratedPage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [pageIdx, setPageIdx] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState({ total: 0, published: 0, thisMonth: 0 });
 
+  // 搜尋去抖動（300ms）
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // 搜尋變更時回到第 0 頁
+  useEffect(() => {
+    setPageIdx(0);
+  }, [debouncedSearch]);
+
+  // 列表載入（依賴搜尋與分頁）
   useEffect(() => {
     loadPages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, pageIdx]);
+
+  // 統計載入（mount 與 delete 後觸發）
+  useEffect(() => {
+    loadStats();
   }, []);
 
   async function loadPages() {
     setLoading(true);
-    const { data } = await supabase
+    let q = supabase
       .from('generated_pages')
-      .select('*')
-      .is('deleted_at', null)
+      .select('*', { count: 'exact' })
+      .is('deleted_at', null);
+
+    const term = debouncedSearch.trim();
+    if (term) {
+      q = q.or(`title.ilike.%${term}%,slug.ilike.%${term}%`);
+    }
+
+    const { data, count } = await q
       .order('created_at', { ascending: false })
-      .limit(20);
+      .range(pageIdx * PAGE_SIZE, pageIdx * PAGE_SIZE + PAGE_SIZE - 1);
+
     if (data) setPages(data as GeneratedPage[]);
+    setTotalCount(count ?? 0);
     setLoading(false);
+  }
+
+  async function loadStats() {
+    const startOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    ).toISOString();
+    const [totalRes, publishedRes, monthRes] = await Promise.all([
+      supabase
+        .from('generated_pages')
+        .select('id', { count: 'exact', head: true })
+        .is('deleted_at', null),
+      supabase
+        .from('generated_pages')
+        .select('id', { count: 'exact', head: true })
+        .is('deleted_at', null)
+        .eq('status', 'published'),
+      supabase
+        .from('generated_pages')
+        .select('id', { count: 'exact', head: true })
+        .is('deleted_at', null)
+        .gte('created_at', startOfMonth),
+    ]);
+    setStats({
+      total: totalRes.count ?? 0,
+      published: publishedRes.count ?? 0,
+      thisMonth: monthRes.count ?? 0,
+    });
   }
 
   async function handleDelete(id: string, label: string) {
@@ -52,7 +115,7 @@ export function DashboardPage() {
       alert('刪除失敗：' + error.message);
       return;
     }
-    await loadPages();
+    await Promise.all([loadPages(), loadStats()]);
   }
 
   return (
@@ -108,18 +171,9 @@ export function DashboardPage() {
           }}
         >
           {[
-            { label: '總頁面', value: pages.length },
-            {
-              label: '已發布',
-              value: pages.filter((p) => p.status === 'published').length,
-            },
-            {
-              label: '本月產生',
-              value: pages.filter(
-                (p) =>
-                  new Date(p.created_at).getMonth() === new Date().getMonth()
-              ).length,
-            },
+            { label: '總頁面', value: stats.total },
+            { label: '已發布', value: stats.published },
+            { label: '本月產生', value: stats.thisMonth },
           ].map(({ label, value }) => (
             <div
               key={label}
@@ -166,13 +220,40 @@ export function DashboardPage() {
 
         <div
           style={{
-            fontSize: '13px',
-            fontWeight: '600',
-            color: '#374151',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginBottom: '12px',
+            gap: '12px',
           }}
         >
-          最近產生的頁面
+          <div
+            style={{
+              fontSize: '13px',
+              fontWeight: '600',
+              color: '#374151',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {debouncedSearch
+              ? `搜尋「${debouncedSearch}」（${totalCount}）`
+              : '最近產生的頁面'}
+          </div>
+          <input
+            type="text"
+            placeholder="搜尋頁面標題或 slug..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              flex: 1,
+              maxWidth: '280px',
+              padding: '6px 10px',
+              fontSize: '13px',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              outline: 'none',
+            }}
+          />
         </div>
 
         {loading ? (
@@ -191,9 +272,13 @@ export function DashboardPage() {
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
+            <div style={{ fontSize: '32px', marginBottom: '12px' }}>
+              {debouncedSearch ? '🔍' : '📄'}
+            </div>
             <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
-              還沒有任何比較頁面，點上方按鈕建立第一個
+              {debouncedSearch
+                ? `找不到包含「${debouncedSearch}」的頁面`
+                : '還沒有任何比較頁面，點上方按鈕建立第一個'}
             </p>
           </div>
         ) : (
@@ -319,6 +404,60 @@ export function DashboardPage() {
               </div>
               );
             })}
+          </div>
+        )}
+
+        {totalCount > PAGE_SIZE && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '16px',
+              fontSize: '13px',
+              color: '#6b7280',
+            }}
+          >
+            <span>
+              第 {pageIdx + 1} / {Math.ceil(totalCount / PAGE_SIZE)} 頁（共{' '}
+              {totalCount} 筆）
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setPageIdx((p) => Math.max(0, p - 1))}
+                disabled={pageIdx === 0}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  border: '1px solid #e5e7eb',
+                  background: 'white',
+                  borderRadius: '8px',
+                  cursor: pageIdx === 0 ? 'not-allowed' : 'pointer',
+                  opacity: pageIdx === 0 ? 0.5 : 1,
+                }}
+              >
+                ← 上一頁
+              </button>
+              <button
+                onClick={() => setPageIdx((p) => p + 1)}
+                disabled={(pageIdx + 1) * PAGE_SIZE >= totalCount}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  border: '1px solid #e5e7eb',
+                  background: 'white',
+                  borderRadius: '8px',
+                  cursor:
+                    (pageIdx + 1) * PAGE_SIZE >= totalCount
+                      ? 'not-allowed'
+                      : 'pointer',
+                  opacity:
+                    (pageIdx + 1) * PAGE_SIZE >= totalCount ? 0.5 : 1,
+                }}
+              >
+                下一頁 →
+              </button>
+            </div>
           </div>
         )}
       </main>
