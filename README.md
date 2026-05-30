@@ -66,7 +66,7 @@
 - generated_pages RLS：團隊共享模式（任何登入顧問可讀寫所有頁面）
 - generated_pages.created_by：目前寫入時皆為 NULL（service role 寫入未帶此欄）。
   若未來要做「顧問只看自己的頁面」，需改 Edge Function 在 upsert 時寫入使用者 id
-- supabase/migrations/：目前為空，線上 schema 無版本控管（見未來優化清單）
+- supabase/migrations/：Phase 4/8/9 的 schema 變更已版控（見 [MIGRATIONS.md](./MIGRATIONS.md)）；Phase 4 之前的 baseline 未捕捉，屬技術債
 
 ---
 
@@ -96,7 +96,7 @@
 | 優先級 | 項目 | 說明 |
 |--------|------|------|
 | P3 | 頁面視覺設計升級 | 現況為「功能型工具感」（資訊密集、實用、好查），目標提升為「品牌型錄質感」：加大區塊留白、改用暖色調背景、卡片加圓角與陰影、字體加呼吸感、城市/校區資訊 infographic 化、頁尾加 CTA 表單。此為加分項非必要——系統定位為顧問當面展示用，現況資訊清晰度已達實用標準。會大改 comparison.html 模板（442 行），建議在 Phase 3/4 功能補完、系統穩定後再動 |
-| P3 | 建立 migration 紀律 | supabase/migrations/ 目前為空，線上 schema 無版本控管。後續動 schema 改走 supabase migration new |
+| ✅ done | 建立 migration 紀律 | Phase 13 完成（見 [MIGRATIONS.md](./MIGRATIONS.md)）。Phase 4 後所有 schema 變更皆有 migration 檔；baseline 補檔留待新環境需求時處理 |
 | P3 | Edge Function 城市比對防呆 | generate-page 用 x.city === c.city 完全字串比對。目前資料三城市完全相符無問題，但未來城市增多或非工程師輸入 city_info 時，建議改為 trim().toLowerCase() 比對 |
 | P4 | created_by 追蹤 | 若需「顧問只看自己產生的頁面」，改 Edge Function 在 upsert 時從前台 JWT 取使用者 id 寫入 created_by |
 
