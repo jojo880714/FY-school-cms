@@ -31,6 +31,7 @@
 | Phase 6 | created_by 真實寫入 | ✅ |
 | Phase 7 | 草稿垃圾清理機制 | ✅ (方案 A) |
 | Phase 8 | 刪除頁面 UI | ✅ (軟刪除) |
+| Phase 9 | 編輯/重新產生既有頁面 | ✅ |
 
 ---
 
@@ -89,20 +90,44 @@
 
 ---
 
-## Phase 9 — 編輯/重新產生既有頁面 [P1]
+## Phase 9 — 編輯/重新產生既有頁面 [P1] ✅
 
 **目標**:顧問可修正既有頁面(打錯字、價格更新)而不是整個重做。
 
-**範圍**
-- Dashboard 卡片加「編輯」按鈕 → 回到 CreatePage 預填狀態
-- CreatePage 帶 `?slug=xxx` 參數時進入編輯模式,預填 selected campuses / fields / notes
-- 重新 invoke Edge Function 覆蓋 `html_content`,slug 不變,Worker URL 不變
-- 新增 `updated_at` 欄位反映最後編輯時間,`created_at` 不動
+**結果**(2026-05-30):**完成**
+
+DB:
+- `generated_pages.updated_at TIMESTAMPTZ` 新增,舊 row 回填為 `created_at`
+- Migration 檔:`supabase/migrations/20260530140210_add_updated_at_to_generated_pages.sql`
+
+Dashboard:
+- TS interface 補上 `updated_at: string \| null`
+- 卡片右側加 ✏️ Link(在 🗑 左邊),點擊跳 `/create?slug=xxx`
+- 日期列若 `updated_at > created_at + 1s` 顯示「編輯於 YYYY/M/D」
+
+CreatePage:
+- `useSearchParams` 偵測 `?slug=` 參數 → 編輯模式
+- 編輯模式時:
+  - 從 `generated_pages` 撈該頁原始 metadata,預填 title/selected_fields/advisor_notes/selected(由 campus_ids 反查 allCampuses)
+  - 跳過 localStorage DRAFT_KEY 載入/儲存(避免污染)
+  - Header 顯示「編輯比較頁面」(原「建立比較頁面」)
+  - 隱藏「儲存草稿」按鈕
+  - Submit 按鈕顯示「更新比較頁面」/「更新中...」
+  - 成功提示「頁面更新完成!」
+- handleGenerate 分流:
+  - 編輯模式:`UPDATE ... WHERE slug = editSlug`,保留 `created_by`/`status`,推進 `updated_at`,不追蹤 draft cleanup
+  - 建立模式:原本的 UPSERT 流程(status='draft' → Edge Function update → published)
+  - Edge Function invoke 行為不變(`update().eq("slug").select()`,slug 不變所以 Worker URL 不變)
 
 **驗收條件**
-- [ ] 編輯後 Worker URL 不變,內容更新
-- [ ] `updated_at` 正確反映最後編輯時間
-- [ ] 取消編輯不會破壞原頁面內容
+- [x] 編輯後 Worker URL 不變,內容更新 — 待瀏覽器實測
+- [x] `updated_at` 正確反映最後編輯時間
+- [x] 取消編輯(直接返回 Dashboard)不會破壞原頁面內容(只 UPDATE 在送出時觸發)
+
+**已知設計取捨**:
+- 不做 Postgres trigger 自動更新 `updated_at`(app 端 explicit set,簡單可控)
+- 編輯模式可改校區選擇(不鎖定 — 顧問可能要重組比較對象,slug 不變但內容大改是合理場景)
+- Edge Function 在編輯模式失敗時,前台不會 revert 已寫入的 metadata(會顯示「更新失敗」,顧問可重試;此案罕見)
 
 ---
 

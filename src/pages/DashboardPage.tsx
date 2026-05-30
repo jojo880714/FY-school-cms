@@ -16,6 +16,7 @@ interface GeneratedPage {
   status: string;
   created_by: string;
   created_at: string;
+  updated_at: string | null;
   deleted_at: string | null;
 }
 
@@ -205,6 +206,13 @@ export function DashboardPage() {
                   ? '舊資料'
                   : `${schoolCount} 校 / ${campusCount} 校區`;
               const openUrl = page.public_url || page.html_url;
+              const editedDate =
+                page.updated_at &&
+                new Date(page.updated_at).getTime() -
+                  new Date(page.created_at).getTime() >
+                  1000
+                  ? new Date(page.updated_at).toLocaleDateString('zh-TW')
+                  : null;
               return (
               <div
                 key={page.id}
@@ -240,6 +248,12 @@ export function DashboardPage() {
                     <span>{new Date(page.created_at).toLocaleDateString('zh-TW')}</span>
                     <span>·</span>
                     <span>{metaText}</span>
+                    {editedDate && (
+                      <>
+                        <span>·</span>
+                        <span>編輯於 {editedDate}</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -269,6 +283,21 @@ export function DashboardPage() {
                   >
                     {page.status === 'published' ? '已發布' : '草稿'}
                   </span>
+                  <Link
+                    to={`/create?slug=${page.slug}`}
+                    title="編輯"
+                    aria-label="編輯"
+                    style={{
+                      fontSize: '14px',
+                      color: '#9ca3af',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      lineHeight: 1,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    ✏️
+                  </Link>
                   <button
                     onClick={() => handleDelete(page.id, page.title || page.slug)}
                     title="刪除"

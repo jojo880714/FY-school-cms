@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ALL_FIELD_KEYS, FIELD_GROUPS } from '../types';
 
@@ -269,6 +269,9 @@ export function CreatePage() {
   const [result, setResult] = useState<{ url: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [searchParams] = useSearchParams();
+  const editSlug = searchParams.get('slug');
+  const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
 
   useEffect(() => {
     async function load() {
@@ -293,6 +296,7 @@ export function CreatePage() {
   }, []);
 
   useEffect(() => {
+    if (editSlug) return; // 編輯模式不載入 localStorage 草稿
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
     try {
@@ -301,9 +305,10 @@ export function CreatePage() {
       if (d.notes) setNotes(d.notes);
       if (d.title) setTitle(d.title);
     } catch {}
-  }, []);
+  }, [editSlug]);
 
   useEffect(() => {
+    if (editSlug) return; // 編輯模式不載入 localStorage 草稿
     if (allCampuses.length === 0) return;
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
@@ -319,15 +324,42 @@ export function CreatePage() {
     } catch {
       // ignore
     }
-  }, [allCampuses]);
+  }, [allCampuses, editSlug]);
+
+  // 編輯模式:從 DB 載入該頁原始資料,預填表單
+  useEffect(() => {
+    if (!editSlug || allCampuses.length === 0) return;
+    async function loadEdit() {
+      const { data: page } = await supabase
+        .from('generated_pages')
+        .select('*')
+        .eq('slug', editSlug)
+        .maybeSingle();
+      if (!page) {
+        alert(`找不到 slug=${editSlug} 的頁面，回到 Dashboard`);
+        navigate('/dashboard');
+        return;
+      }
+      if (page.title) setTitle(page.title);
+      if (page.selected_fields) setFields(page.selected_fields);
+      if (page.advisor_notes) setNotes(page.advisor_notes);
+      if (page.campus_ids && Array.isArray(page.campus_ids)) {
+        const idSet = new Set<string>(page.campus_ids);
+        setSelected(allCampuses.filter((c) => idSet.has(c.id)));
+      }
+      setLoadingEdit(false);
+    }
+    loadEdit();
+  }, [editSlug, allCampuses, navigate]);
 
   const saveDraft = useCallback(() => {
+    if (editSlug) return; // 編輯模式不存草稿
     localStorage.setItem(
       DRAFT_KEY,
       JSON.stringify({ selectedIds: selected.map((c) => c.id), fields, notes, title })
     );
     setSavedAt(new Date());
-  }, [selected, fields, notes, title]);
+  }, [selected, fields, notes, title, editSlug]);
 
   useEffect(() => {
     const t = setInterval(saveDraft, 30000);
@@ -370,7 +402,10 @@ export function CreatePage() {
         cityInfo: (cityData || []).filter((ci) => ci.city === campus.city),
       }));
 
-      const slug = `${selected.map((c) => `${c.school.name.toLowerCase()}-${c.city.toLowerCase()}`).join('-')}-${Date.now().toString().slice(-4)}`;
+      // 編輯模式:沿用既有 slug;建立模式:生新 slug
+      const slug =
+        editSlug ||
+        `${selected.map((c) => `${c.school.name.toLowerCase()}-${c.city.toLowerCase()}`).join('-')}-${Date.now().toString().slice(-4)}`;
       const pageTitle = title || selected.map((c) => `${c.school.name} ${c.city}`).join(' vs ') + ' 比較 2026';
       const selectedFieldLabels = Object.entries(fields)
         .filter(([, v]) => v)
@@ -385,17 +420,35 @@ export function CreatePage() {
         return;
       }
 
-      await supabase.from('generated_pages').upsert({
-        slug,
-        title: pageTitle,
-        school_ids: selected.map((c) => c.school_id),
-        campus_ids: selected.map((c) => c.id),
-        selected_fields: fields,
-        advisor_notes: notes,
-        status: 'draft',
-        created_by: user.id,
-      }, { onConflict: 'slug' });
-      draftCreatedSlug = slug;
+      if (editSlug) {
+        // 編輯模式:UPDATE 既有 row,保留 created_by/status,推進 updated_at
+        const { error: updErr } = await supabase
+          .from('generated_pages')
+          .update({
+            title: pageTitle,
+            school_ids: selected.map((c) => c.school_id),
+            campus_ids: selected.map((c) => c.id),
+            selected_fields: fields,
+            advisor_notes: notes,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('slug', editSlug);
+        if (updErr) throw updErr;
+        // 編輯模式不追蹤 draft（既有頁本來就 published）
+      } else {
+        // 建立模式:UPSERT,status=draft,Edge Function 後續 update 成 published
+        await supabase.from('generated_pages').upsert({
+          slug,
+          title: pageTitle,
+          school_ids: selected.map((c) => c.school_id),
+          campus_ids: selected.map((c) => c.id),
+          selected_fields: fields,
+          advisor_notes: notes,
+          status: 'draft',
+          created_by: user.id,
+        }, { onConflict: 'slug' });
+        draftCreatedSlug = slug;
+      }
 
       const { data: result, error: fnError } = await supabase.functions.invoke(
         'generate-page',
@@ -412,7 +465,7 @@ export function CreatePage() {
       if (!result.success) throw new Error(result.error);
 
       setResult({ url: result.url });
-      localStorage.removeItem(DRAFT_KEY);
+      if (!editSlug) localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
       if (draftCreatedSlug) {
         try {
@@ -426,7 +479,7 @@ export function CreatePage() {
         }
       }
       console.error(err);
-      alert('產生失敗：' + String(err));
+      alert((editSlug ? '更新失敗：' : '產生失敗：') + String(err));
     } finally {
       setGenerating(false);
     }
@@ -448,7 +501,7 @@ export function CreatePage() {
         >
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
           <h2 style={{ fontSize: '20px', marginBottom: '8px' }}>
-            頁面產生完成！
+            {editSlug ? '頁面更新完成！' : '頁面產生完成！'}
           </h2>
           <p
             style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}
@@ -531,10 +584,10 @@ export function CreatePage() {
           ← 返回
         </Link>
         <span style={{ fontSize: '14px', fontWeight: '500' }}>
-          建立比較頁面
+          {editSlug ? '編輯比較頁面' : '建立比較頁面'}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {savedAt && (
+          {!editSlug && savedAt && (
             <span style={{ fontSize: '11px', color: '#9ca3af' }}>
               已儲存{' '}
               {savedAt.toLocaleTimeString('zh-TW', {
@@ -543,19 +596,21 @@ export function CreatePage() {
               })}
             </span>
           )}
-          <button
-            onClick={saveDraft}
-            style={{
-              fontSize: '12px',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              background: 'white',
-              cursor: 'pointer',
-            }}
-          >
-            儲存草稿
-          </button>
+          {!editSlug && (
+            <button
+              onClick={saveDraft}
+              style={{
+                fontSize: '12px',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                background: 'white',
+                cursor: 'pointer',
+              }}
+            >
+              儲存草稿
+            </button>
+          )}
         </div>
       </header>
 
@@ -591,7 +646,7 @@ export function CreatePage() {
               {selected.length} / {MAX}
             </span>
           </div>
-          {loading ? (
+          {(loading || loadingEdit) ? (
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
             >
@@ -831,7 +886,13 @@ export function CreatePage() {
                     : 'pointer',
               }}
             >
-              {generating ? '產生中...' : '產生比較頁面'}
+              {generating
+                ? editSlug
+                  ? '更新中...'
+                  : '產生中...'
+                : editSlug
+                ? '更新比較頁面'
+                : '產生比較頁面'}
             </button>
             <p
               style={{
