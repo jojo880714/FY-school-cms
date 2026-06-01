@@ -36,6 +36,13 @@
 | Phase 11 | Slug 唯一性強化 | ✅ |
 | Phase 13 | Migration 紀律建立 | ✅ |
 | Phase 12 | comparison.html 視覺升級 | ✅ |
+| Phase 14a | Multi-country / multi-currency schema | ✅ |
+| Phase 14b | IMPORT_TEMPLATES.md 資料準備範本 | ✅ |
+| Phase 15a | 深度欄位 schema 擴充(差異化資訊) | ✅ |
+
+待辦(等資料/實作):
+- Phase 14c — 寫匯入腳本 + Edge Function 改讀新欄位 + redeploy(等使用者填完 14b Sheets)
+- Phase 15b — Edge Function + template 顯示深度欄位(可跟 14c 同時做)
 
 ---
 

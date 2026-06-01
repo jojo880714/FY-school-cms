@@ -51,14 +51,18 @@
 | `accreditation` | 陣列 |  | `Languages Canada, ACCET` | 認證機構,**用半形逗號分隔**,匯入時轉陣列 |
 | `nationality_count` | INT |  | `80` | 國籍數量(該校學生來源國家數) |
 | `notes` | TEXT |  | `多倫多老牌大校,商英課程最強` | 顧問補充說明 |
+| `class_size_typical` | INT |  | `12` | 平均班級人數(Phase 15a 新增) |
+| `class_size_max` | INT |  | `18` | 班級人數上限(Phase 15a 新增) |
+| `strengths` | 陣列 |  | `商英最強, 年輕活潑氛圍, IELTS 衝刺` | 該校 2-3 個強項標籤,半形逗號分隔(Phase 15a 新增) |
+| `suitable_for` | 陣列 |  | `想短期體驗, 想升學, 想兼打工` | 適合的學生類型,半形逗號分隔(Phase 15a 新增) |
 
-**範例 row:**
+**範例 rows:**
 
-| name | full_name | country | founded | english_only_policy | accreditation | nationality_count | notes |
-|---|---|---|---|---|---|---|---|
-| ILAC | International Language Academy of Canada | Canada | 1997 | TRUE | Languages Canada, ACCET | 80 | 多倫多老牌大校 |
-| Kaplan | Kaplan International Languages | UK | 1938 | FALSE | British Council, English UK | 150 | 全球網絡大,品牌穩 |
-| EC | EC English Language Centres | UK | 1991 | TRUE | British Council, IALC | 140 | 課程結構嚴謹 |
+| name | full_name | country | founded | english_only_policy | accreditation | nationality_count | notes | class_size_typical | class_size_max | strengths | suitable_for |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| ILAC | International Language Academy of Canada | Canada | 1997 | TRUE | Languages Canada, ACCET | 80 | 多倫多老牌大校 | 13 | 18 | 商英最強, 年輕活潑, 升學銜接強 | 想升學, 想兼打工, 想短期體驗 |
+| Kaplan | Kaplan International Languages | UK | 1938 | FALSE | British Council, English UK | 150 | 全球網絡大 | 14 | 15 | 全球網絡, 考試準備, 品牌穩定 | 想國際同學圈, 想考試衝刺 |
+| EC | EC English Language Centres | UK | 1991 | TRUE | British Council, IALC | 140 | 課程結構嚴謹 | 12 | 15 | 課程結構嚴謹, 老師資深, 國籍均衡 | 想穩紮穩打學英文, 想避免亞洲學生過多 |
 
 ---
 
@@ -97,16 +101,18 @@
 | `name` | TEXT | ✅ | `General English` | 課程名稱,英文 |
 | `hours_per_week` | INT |  | `30` | 每週小時數 |
 | `schedule` | TEXT |  | `週一至五 9:00-15:00` | 上課時段描述,中文可 |
+| `entry_level` | TEXT |  | `Pre-Intermediate (A2)` | 入學門檻,用 CEFR 等級或 IELTS 分數,讓學生知道「我這程度上得到嗎」(Phase 15a 新增) |
+| `outcome_level` | TEXT |  | `C1 / IELTS 6.5+` | 預期學成後 outcome,讓學生知道「畢業後我會到什麼程度」(Phase 15a 新增) |
 
 **範例 rows:**
 
-| school_name | name | hours_per_week | schedule |
-|---|---|---|---|
-| ILAC | Intensive English | 30 | 週一至五 9:00-15:30 |
-| ILAC | Power English | 38 | 週一至五 9:00-18:00 |
-| ILAC | IELTS Preparation | 32 | 週一至五 9:00-16:00 |
-| Kaplan | Vacation English | 20 | 週一至五 9:00-13:00 |
-| Kaplan | Intensive Academic | 28 | 週一至五 9:00-15:30 |
+| school_name | name | hours_per_week | schedule | entry_level | outcome_level |
+|---|---|---|---|---|---|
+| ILAC | Intensive English | 30 | 週一至五 9:00-15:30 | Beginner (A1) | B2 / IELTS 6.0 |
+| ILAC | Power English | 38 | 週一至五 9:00-18:00 | Intermediate (B1) | C1 / IELTS 7.0+ |
+| ILAC | IELTS Preparation | 32 | 週一至五 9:00-16:00 | Upper-Intermediate (B2) | IELTS 6.5+ |
+| Kaplan | Vacation English | 20 | 週一至五 9:00-13:00 | Beginner (A1) | A2 |
+| Kaplan | Intensive Academic | 28 | 週一至五 9:00-15:30 | Intermediate (B1) | B2 / IELTS 6.0+ |
 
 ---
 
@@ -247,3 +253,4 @@ schools / campuses 那兩張表先匯入,其他下次
 | 日期 | 變更 |
 |---|---|
 | 2026-06-01 | Phase 14b 初版 |
+| 2026-06-01 | Phase 15a 同步:schools 加 4 欄(class_size_typical / class_size_max / strengths / suitable_for)、programs 加 2 欄(entry_level / outcome_level) |
