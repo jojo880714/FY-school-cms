@@ -478,9 +478,10 @@
 <!-- HERO -->
 <div class="hero">
   <div class="hero-content">
-    <div class="hero-badge">加拿大語言學校比較 2026</div>
+    <div class="hero-badge">語言學校比較 2026</div>
     <h1>{{PAGE_TITLE}}</h1>
-    <p class="hero-sub">由放洋留遊學顧問為您整理</p>
+    <p class="hero-sub" style="margin-bottom: 8px;">由放洋留遊學顧問為您整理</p>
+    <p class="hero-sub" style="font-size: 13px; opacity: 0.85; margin-bottom: 24px;">比較中:{{COMPARE_SUMMARY}}</p>
     <div class="hero-schools">
       {{HERO_SCHOOL_CHIPS}}
     </div>
@@ -491,10 +492,14 @@
 <nav class="sticky-nav">
   <div class="nav-inner">
     <a href="#overview" class="nav-link active">總覽比較</a>
+    <a href="#tldr" class="nav-link">一句話差異</a>
+    <a href="#suitable" class="nav-link">適合誰</a>
+    <a href="#quality" class="nav-link">教學品質</a>
     <a href="#programs" class="nav-link">課程方案</a>
     <a href="#tuition" class="nav-link">學費計算</a>
     <a href="#housing" class="nav-link">住宿費用</a>
     <a href="#cities" class="nav-link">城市資訊</a>
+    <a href="#nationality" class="nav-link">學員國籍</a>
     <a href="#detail" class="nav-link">各校詳情</a>
   </div>
 </nav>
@@ -527,6 +532,31 @@
       <div class="cards-grid">
         {{OVERVIEW_CARDS}}
       </div>
+    </div>
+  </section>
+
+  <!-- TLDR — 一句話差異 -->
+  <section id="tldr" class="section">
+    <div class="section-title">一句話讀懂這幾間的差異</div>
+    <div class="cards-grid">
+      {{TLDR_CARDS}}
+    </div>
+  </section>
+
+  <!-- SUITABLE FOR — 適合什麼樣的你 -->
+  <section id="suitable" class="section">
+    <div class="section-title">適合什麼樣的你</div>
+    <p style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 14px;">跨校共同標籤以主色突顯,代表這幾間都有同樣定位。</p>
+    <div class="cards-grid">
+      {{SUITABLE_FOR_CHIPS}}
+    </div>
+  </section>
+
+  <!-- QUALITY — 教學品質與政策 -->
+  <section id="quality" class="section">
+    <div class="section-title">教學品質與政策</div>
+    <div class="cards-grid">
+      {{QUALITY_CARDS}}
     </div>
   </section>
 
@@ -573,6 +603,15 @@
     <div class="section-title">城市資訊</div>
     <div class="cards-grid">
       {{CITY_CARDS}}
+    </div>
+  </section>
+
+  <!-- NATIONALITY — 學員國籍 -->
+  <section id="nationality" class="section">
+    <div class="section-title">學員國籍組成</div>
+    <p style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 14px;">以下為一般參考分布,實際依當期學員而定。</p>
+    <div class="cards-grid">
+      {{NATIONALITY_CARDS}}
     </div>
   </section>
 
