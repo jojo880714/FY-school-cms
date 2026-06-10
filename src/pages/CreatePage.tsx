@@ -11,6 +11,7 @@ interface School {
   english_only_policy: boolean;
   accreditation: string[] | null;
   min_age: number | null;  // Phase 17a
+  persona_match: string[] | null;  // Phase 17b
 }
 interface Campus {
   id: string;
@@ -109,6 +110,7 @@ function CampusCard({
   minEntryLevel,
   weeksMismatch,
   minWeeks,
+  personaMatch,
 }: {
   campus: CampusWithSchool;
   selected: boolean;
@@ -123,6 +125,7 @@ function CampusCard({
   minEntryLevel?: string | null;
   weeksMismatch?: boolean;
   minWeeks?: number | null;
+  personaMatch?: boolean;
 }) {
   return (
     <div
@@ -143,6 +146,19 @@ function CampusCard({
       <div style={{ fontSize: 13, color: '#6B6B6B', marginBottom: 8 }}>
         {campus.city}
       </div>
+      {personaMatch && (
+        <span style={{
+          display: 'inline-block',
+          fontSize: '11px',
+          color: '#166534',
+          background: '#DCFCE7',
+          borderRadius: '4px',
+          padding: '2px 6px',
+          marginBottom: '4px',
+        }}>
+          符合目標 ✓
+        </span>
+      )}
       {ageBlocked && minAge && (
         <span style={{
           display: 'inline-block',
@@ -597,6 +613,18 @@ export function CreatePage() {
     const weeks = programs.map((p) => p.min_weeks).filter((w): w is number => w !== null);
     if (weeks.length === 0) return null;
     return Math.min(...weeks);
+  }
+
+  // Phase 17b — 依學生 selectedPurposes 與學校 persona_match[] 比對
+  function getPersonaMatchScore(campus: CampusWithSchool): number {
+    if (selectedPurposes.length === 0) return 0;
+    if (!campus.school.persona_match?.length) return 0;
+    return selectedPurposes.filter((p) =>
+      campus.school.persona_match!.includes(p)
+    ).length;
+  }
+  function isCampusPersonaMatch(campus: CampusWithSchool): boolean {
+    return getPersonaMatchScore(campus) > 0;
   }
 
   function toggleCampus(campus: CampusWithSchool) {
@@ -1226,7 +1254,15 @@ export function CreatePage() {
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
             >
-              {allCampuses.map((campus) => {
+              {(() => {
+                // Phase 17b — 依 persona_match score 排序(分數高的在上)
+                const sortedCampuses = [...allCampuses].sort((a, b) => {
+                  const scoreB = getPersonaMatchScore(b);
+                  const scoreA = getPersonaMatchScore(a);
+                  if (scoreB !== scoreA) return scoreB - scoreA;
+                  return 0;
+                });
+                return sortedCampuses.map((campus) => {
                 const ageBlocked =
                   studentAge !== null &&
                   campus.school.min_age !== null &&
@@ -1247,10 +1283,12 @@ export function CreatePage() {
                       minEntryLevel={getCampusMinEntryLevel(campus.school.id)}
                       weeksMismatch={isCampusWeeksMismatch(campus.school.id)}
                       minWeeks={getCampusMinWeeks(campus.school.id)}
+                      personaMatch={selectedPurposes.length > 0 && isCampusPersonaMatch(campus)}
                     />
                   </div>
                 );
-              })}
+                });
+              })()}
             </div>
           )}
         </div>
