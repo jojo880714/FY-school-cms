@@ -55,6 +55,10 @@
 | `class_size_max` | INT |  | `18` | 班級人數上限(Phase 15a 新增) |
 | `strengths` | 陣列 |  | `商英最強, 年輕活潑氛圍, IELTS 衝刺` | 該校 2-3 個強項標籤,半形逗號分隔(Phase 15a 新增) |
 | `suitable_for` | 陣列 |  | `想短期體驗, 想升學, 想兼打工` | 適合的學生類型,半形逗號分隔(Phase 15a 新增) |
+| `one_liner` | TEXT |  | `年輕活潑氛圍的多倫多商英大校` | TLDR 一句話定位(<40 字),Section 2 用(Phase 16a 新增) |
+| `english_only_policy_label` | TEXT |  | `違規警告制` | 顧問用語化的英語政策描述(<12 字),Section 3 用(Phase 16a 新增) |
+| `min_age` | INT |  | `18` | 最低收生年齡(NULL = 無限制 / 待補),未來給「依學生年齡過濾」UI 用(Phase 16a 新增) |
+| `top_nationalities` | JSONB |  | `[{"name":"Spain","flag":"🇪🇸"},{"name":"Brazil","flag":"🇧🇷"}]` | 學員國籍排名清單,Section 10 用(Phase 16a 新增) |
 
 **範例 rows:**
 
@@ -103,6 +107,7 @@
 | `schedule` | TEXT |  | `週一至五 9:00-15:00` | 上課時段描述,中文可 |
 | `entry_level` | TEXT |  | `Pre-Intermediate (A2)` | 入學門檻,用 CEFR 等級或 IELTS 分數,讓學生知道「我這程度上得到嗎」(Phase 15a 新增) |
 | `outcome_level` | TEXT |  | `C1 / IELTS 6.5+` | 預期學成後 outcome,讓學生知道「畢業後我會到什麼程度」(Phase 15a 新增) |
+| `min_weeks` | INT |  | `4` | 該課程最短可報週數,Section 5 比較表用(Phase 16a 新增) |
 
 **範例 rows:**
 
@@ -155,6 +160,8 @@
 | `subtype` | TEXT |  | `Single Room, Half Board` | 細項描述 |
 | `price_per_week` | NUMERIC | ✅ | `250` | 每週費用,不含幣別 |
 | `currency` | TEXT | ✅ | `CAD` | 幣別 ISO code |
+| `includes` | TEXT |  | `半膳(早晚餐)` | 含什麼(早餐/半膳/自理/含洗衣...),Section 8 住宿矩陣用(Phase 16a 新增) |
+| `commute_to_school` | TEXT |  | `步行 5 分鐘` | 通勤描述,Section 8 用(Phase 16a 新增) |
 
 **範例 rows:**
 
@@ -180,6 +187,7 @@
 | `cost_of_living_monthly` | INT |  | `1500` | 月生活費(數字,不含幣別) |
 | `cost_of_living_currency` | TEXT |  | `CAD` | 生活費幣別 |
 | `highlights` | 陣列 |  | `金融中心, 多元文化, 大湖區` | 城市特色,半形逗號分隔 |
+| `visa_options` | 陣列 |  | `eTA, 學簽, 工簽` | 該城市/國家適用簽證選項,半形逗號分隔,Section 5 比較表用(Phase 16a 新增) |
 
 **範例 rows:**
 
