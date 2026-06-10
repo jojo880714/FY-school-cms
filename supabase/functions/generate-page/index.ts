@@ -6,13 +6,42 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Q3 opt-in — 把學生條件 profile 組成 hero 下方的摘要句
+function buildProfileSummary(profile: any): string {
+  if (!profile) return '';
+  const parts: string[] = [];
+  if (profile.age) parts.push(`${profile.age} 歲`);
+  if (profile.budgetWeekly && profile.budgetCurrency) {
+    parts.push(`預算 $${Number(profile.budgetWeekly).toLocaleString()} ${profile.budgetCurrency}/週`);
+  }
+  if (profile.examCefr) {
+    const examLabels: Record<string, string> = { toeic: '多益', ielts: '雅思', toefl: '托福 iBT' };
+    if (profile.examType && !String(profile.examType).startsWith('none') && profile.examScore != null) {
+      parts.push(`${examLabels[profile.examType] ?? profile.examType} ${profile.examScore}（${profile.examCefr}）`);
+    } else {
+      parts.push(`無檢定（${profile.examCefr}）`);
+    }
+  }
+  if (profile.maxWeeks) parts.push(`${profile.maxWeeks} 週以內`);
+  if (Array.isArray(profile.selectedPurposes) && profile.selectedPurposes.length > 0) {
+    const labels: Record<string, string> = {
+      lang_school: '語言進修', exam_prep: '考試衝刺', working_holiday: '打工度假',
+      pathway_uni: '銜接升大學', pathway_grad: '銜接升研究所', career_change: '職涯轉換',
+      short_tour: '遊學團', custom_tour: '客製化遊學', pr_immigration: '移民規劃', undecided: '方向未定',
+    };
+    parts.push(profile.selectedPurposes.map((id: string) => labels[id] ?? id).join('・'));
+  }
+  if (parts.length === 0) return '';
+  return `<p class="hero-sub" style="font-size:12px;opacity:0.72;margin-bottom:16px;margin-top:-6px;letter-spacing:0.02em;">為 ${parts.join('・')} 整理</p>`;
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { schoolsInfo, selectedFields, title, slug } = await req.json();
+    const { schoolsInfo, selectedFields, title, slug, studentProfile } = await req.json();
     console.log("Received schools:", schoolsInfo?.length, "slug:", slug);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -336,6 +365,7 @@ serve(async (req: Request) => {
     html = html
       .replaceAll("{{PAGE_TITLE}}", title)
       .replace("{{COMPARE_SUMMARY}}", compareSummary)
+      .replace("{{PROFILE_SUMMARY}}", buildProfileSummary(studentProfile))
       .replace("{{HERO_SCHOOL_CHIPS}}", heroChips)
       .replace("{{TABLE_HEADERS}}", tableHeaders)
       .replace("{{TABLE_ROWS}}", tableRows)

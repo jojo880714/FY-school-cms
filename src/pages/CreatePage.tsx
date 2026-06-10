@@ -429,6 +429,8 @@ export function CreatePage() {
   const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
   // Phase 17f — 預計週數
   const [maxWeeks, setMaxWeeks] = useState<number | null>(null);
+  // Q3 opt-in — 是否將學生條件加入公開頁
+  const [includeProfileInPage, setIncludeProfileInPage] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
   const editSlug = searchParams.get('slug');
   const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
@@ -707,6 +709,16 @@ export function CreatePage() {
             selectedFields: selectedFieldLabels,
             title: pageTitle,
             slug,
+            studentProfile: includeProfileInPage ? {
+              age: studentAge,
+              budgetWeekly: weeklyBudget,
+              budgetCurrency: budgetCurrency || null,
+              examType: examType || null,
+              examScore: examScore,
+              examCefr: examType ? getStudentCefr(examType, examScore ?? 0) : null,
+              selectedPurposes: selectedPurposes,
+              maxWeeks: maxWeeks,
+            } : null,
           },
         }
       );
@@ -1178,8 +1190,22 @@ export function CreatePage() {
                 </button>
               )}
             </div>
+
+            {/* Q3 opt-in — 把學生條件加入公開頁 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #E5E7EB' }}>
+              <input
+                type="checkbox"
+                id="include-profile"
+                checked={includeProfileInPage}
+                onChange={(e) => setIncludeProfileInPage(e.target.checked)}
+                style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+              />
+              <label htmlFor="include-profile" style={{ fontSize: '12px', color: '#6B7280', cursor: 'pointer' }}>
+                將學生條件加入比較頁(供諮詢時展示)
+              </label>
+            </div>
           </div>
-          {/* ── Phase 17a / 17c / 17d / 17e / 17f 結束 ── */}
+          {/* ── Phase 17a / 17c / 17d / 17e / 17f + Q3 結束 ── */}
 
           {(loading || loadingEdit) ? (
             <div
