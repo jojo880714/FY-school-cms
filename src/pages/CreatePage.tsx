@@ -38,6 +38,7 @@ interface Program {
   id: string;
   school_id: string;
   entry_level: string | null;
+  min_weeks: number | null;  // Phase 17f
 }
 
 // CEFR 數字化:A1=1 A2=2 B1=3 B2=4 C1=5 C2=6
@@ -106,6 +107,8 @@ function CampusCard({
   priceCurrency,
   levelTooHigh,
   minEntryLevel,
+  weeksMismatch,
+  minWeeks,
 }: {
   campus: CampusWithSchool;
   selected: boolean;
@@ -118,6 +121,8 @@ function CampusCard({
   priceCurrency?: string;
   levelTooHigh?: boolean;
   minEntryLevel?: string | null;
+  weeksMismatch?: boolean;
+  minWeeks?: number | null;
 }) {
   return (
     <div
@@ -179,6 +184,21 @@ function CampusCard({
           marginLeft: (ageBlocked || overBudget) ? '6px' : 0,
         }}>
           建議 {minEntryLevel} 以上
+        </span>
+      )}
+      {weeksMismatch && minWeeks && (
+        <span style={{
+          display: 'inline-block',
+          fontSize: '11px',
+          color: '#92400E',
+          background: '#FEF3C7',
+          borderRadius: '4px',
+          padding: '2px 6px',
+          marginTop: '4px',
+          marginBottom: 8,
+          marginLeft: (ageBlocked || overBudget || levelTooHigh) ? '6px' : 0,
+        }}>
+          最短 {minWeeks} 週起
         </span>
       )}
       {campus.metro_station && (
@@ -407,6 +427,8 @@ export function CreatePage() {
   const [allPrograms, setAllPrograms] = useState<Program[]>([]);
   // Phase 17e — 出發目的(多選)
   const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
+  // Phase 17f — 預計週數
+  const [maxWeeks, setMaxWeeks] = useState<number | null>(null);
   const [searchParams] = useSearchParams();
   const editSlug = searchParams.get('slug');
   const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
@@ -432,7 +454,7 @@ export function CreatePage() {
       const { data: tiers } = await supabase.from('tuition_tiers').select('*');
       if (tiers) setAllTuitionTiers(tiers as TuitionTier[]);
       // Phase 17d — 載入所有 programs 給英語程度過濾用
-      const { data: programs } = await supabase.from('programs').select('id, school_id, entry_level');
+      const { data: programs } = await supabase.from('programs').select('id, school_id, entry_level, min_weeks');
       if (programs) setAllPrograms(programs as Program[]);
       setLoading(false);
     }
@@ -555,6 +577,24 @@ export function CreatePage() {
     setSelectedPurposes((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
+  }
+
+  // Phase 17f — 預計週數過濾(軟提示)
+  function isCampusWeeksMismatch(schoolId: string): boolean {
+    if (maxWeeks === null) return false;
+    const programs = allPrograms.filter((p) => p.school_id === schoolId);
+    if (programs.length === 0) return false;
+    // 只要有任一課程 min_weeks ≤ 學生可用週數,就不標示
+    return !programs.some((p) => {
+      if (p.min_weeks === null) return true; // 沒填 min_weeks → 不限制
+      return p.min_weeks <= maxWeeks;
+    });
+  }
+  function getCampusMinWeeks(schoolId: string): number | null {
+    const programs = allPrograms.filter((p) => p.school_id === schoolId);
+    const weeks = programs.map((p) => p.min_weeks).filter((w): w is number => w !== null);
+    if (weeks.length === 0) return null;
+    return Math.min(...weeks);
   }
 
   function toggleCampus(campus: CampusWithSchool) {
@@ -1095,8 +1135,51 @@ export function CreatePage() {
                 </button>
               )}
             </div>
+
+            {/* 預計週數 (Phase 17f) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '13px', color: '#374151', whiteSpace: 'nowrap' }}>
+                預計週數
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={104}
+                placeholder="週"
+                value={maxWeeks ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setMaxWeeks(val === '' ? null : Number(val));
+                }}
+                style={{
+                  width: '65px',
+                  padding: '6px 8px',
+                  fontSize: '13px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  textAlign: 'center',
+                }}
+              />
+              <span style={{ fontSize: '12px', color: '#6B7280' }}>週以內</span>
+              {maxWeeks !== null && (
+                <button
+                  onClick={() => setMaxWeeks(null)}
+                  style={{
+                    fontSize: '12px',
+                    color: '#9CA3AF',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0 4px',
+                  }}
+                >
+                  清除
+                </button>
+              )}
+            </div>
           </div>
-          {/* ── Phase 17a / 17c / 17d / 17e 結束 ── */}
+          {/* ── Phase 17a / 17c / 17d / 17e / 17f 結束 ── */}
 
           {(loading || loadingEdit) ? (
             <div
@@ -1136,6 +1219,8 @@ export function CreatePage() {
                       priceCurrency={budgetCurrency}
                       levelTooHigh={isCampusLevelTooHigh(campus.id, campus.school.id)}
                       minEntryLevel={getCampusMinEntryLevel(campus.school.id)}
+                      weeksMismatch={isCampusWeeksMismatch(campus.school.id)}
+                      minWeeks={getCampusMinWeeks(campus.school.id)}
                     />
                   </div>
                 );
