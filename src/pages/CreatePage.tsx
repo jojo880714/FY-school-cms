@@ -22,6 +22,16 @@ interface Campus {
 interface CampusWithSchool extends Campus {
   school: School;
 }
+// Phase 17c
+interface TuitionTier {
+  id: string;
+  program_id: string;
+  campus_id: string;
+  weeks_min: number;
+  weeks_max: number | null;
+  price_per_week: number;
+  currency: string;
+}
 
 const DRAFT_KEY = 'cms_draft';
 const MAX = 5;
@@ -33,6 +43,9 @@ function CampusCard({
   disabled,
   ageBlocked,
   minAge,
+  overBudget,
+  minPrice,
+  priceCurrency,
 }: {
   campus: CampusWithSchool;
   selected: boolean;
@@ -40,6 +53,9 @@ function CampusCard({
   disabled: boolean;
   ageBlocked?: boolean;
   minAge?: number | null;
+  overBudget?: boolean;
+  minPrice?: number | null;
+  priceCurrency?: string;
 }) {
   return (
     <div
@@ -71,6 +87,21 @@ function CampusCard({
           marginBottom: 8,
         }}>
           需滿 {minAge} 歲
+        </span>
+      )}
+      {overBudget && minPrice !== null && minPrice !== undefined && (
+        <span style={{
+          display: 'inline-block',
+          fontSize: '11px',
+          color: '#92400E',
+          background: '#FEF3C7',
+          borderRadius: '4px',
+          padding: '2px 6px',
+          marginTop: '4px',
+          marginBottom: 8,
+          marginLeft: ageBlocked ? '6px' : 0,
+        }}>
+          最低 ${minPrice.toLocaleString()}{priceCurrency ? ` ${priceCurrency}` : ''}/週
         </span>
       )}
       {campus.metro_station && (
@@ -289,6 +320,10 @@ export function CreatePage() {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   // Phase 17a — 學生年齡 profile(session-only,不存 DB)
   const [studentAge, setStudentAge] = useState<number | null>(null);
+  // Phase 17c — 預算 profile (軟提示,session-only)
+  const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
+  const [budgetCurrency, setBudgetCurrency] = useState<string>('CAD');
+  const [allTuitionTiers, setAllTuitionTiers] = useState<TuitionTier[]>([]);
   const [searchParams] = useSearchParams();
   const editSlug = searchParams.get('slug');
   const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
@@ -310,6 +345,9 @@ export function CreatePage() {
           }))
         );
       }
+      // Phase 17c — 載入所有 tuition_tiers 給預算過濾用
+      const { data: tiers } = await supabase.from('tuition_tiers').select('*');
+      if (tiers) setAllTuitionTiers(tiers as TuitionTier[]);
       setLoading(false);
     }
     load();
@@ -385,6 +423,21 @@ export function CreatePage() {
     const t = setInterval(saveDraft, 30000);
     return () => clearInterval(t);
   }, [saveDraft]);
+
+  // Phase 17c helpers — 預算過濾(軟提示)
+  function getCampusMinPrice(campusId: string, currency: string): number | null {
+    const tiers = allTuitionTiers.filter(
+      (t) => t.campus_id === campusId && t.currency === currency
+    );
+    if (tiers.length === 0) return null;
+    return Math.min(...tiers.map((t) => t.price_per_week));
+  }
+  function isCampusOverBudget(campusId: string): boolean {
+    if (weeklyBudget === null) return false;
+    const minPrice = getCampusMinPrice(campusId, budgetCurrency);
+    if (minPrice === null) return false; // 沒有對應 currency 的資料,不標示
+    return minPrice > weeklyBudget;
+  }
 
   function toggleCampus(campus: CampusWithSchool) {
     // Phase 17a:年齡不符直接擋住(已選的可取消,新選的要符合年齡門檻)
@@ -747,8 +800,70 @@ export function CreatePage() {
                 </span>
               )}
             </div>
+            {/* Phase 17c — 預算欄位(軟提示,不擋選取) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '13px', color: '#374151', whiteSpace: 'nowrap' }}>
+                每週預算
+              </label>
+              <input
+                type="number"
+                min={1}
+                placeholder="金額"
+                value={weeklyBudget ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setWeeklyBudget(val === '' ? null : Number(val));
+                }}
+                style={{
+                  width: '90px',
+                  padding: '6px 8px',
+                  fontSize: '13px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  textAlign: 'center',
+                }}
+              />
+              <select
+                value={budgetCurrency}
+                onChange={(e) => setBudgetCurrency(e.target.value)}
+                style={{
+                  padding: '6px 8px',
+                  fontSize: '13px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  background: 'white',
+                }}
+              >
+                <option value="CAD">CAD</option>
+                <option value="AUD">AUD</option>
+                <option value="GBP">GBP</option>
+                <option value="USD">USD</option>
+              </select>
+              {weeklyBudget !== null && (
+                <button
+                  onClick={() => setWeeklyBudget(null)}
+                  style={{
+                    fontSize: '12px',
+                    color: '#9CA3AF',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0 4px',
+                  }}
+                >
+                  清除
+                </button>
+              )}
+              {weeklyBudget !== null && (
+                <span style={{ fontSize: '12px', color: '#6B6B6B' }}>
+                  · 超過預算只是提示,仍可選取
+                </span>
+              )}
+            </div>
           </div>
-          {/* ── Phase 17a 結束 ── */}
+          {/* ── Phase 17a / 17c 結束 ── */}
 
           {(loading || loadingEdit) ? (
             <div
@@ -783,6 +898,9 @@ export function CreatePage() {
                       disabled={selected.length >= MAX}
                       ageBlocked={ageBlocked}
                       minAge={campus.school.min_age}
+                      overBudget={isCampusOverBudget(campus.id)}
+                      minPrice={getCampusMinPrice(campus.id, budgetCurrency)}
+                      priceCurrency={budgetCurrency}
                     />
                   </div>
                 );
