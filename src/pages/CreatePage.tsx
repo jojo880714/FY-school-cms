@@ -90,6 +90,7 @@ const PURPOSE_TAGS = [
   { id: 'pathway_uni',     label: '銜接升大學' },
   { id: 'pathway_grad',    label: '銜接升研究所' },
   { id: 'career_change',   label: '職涯轉換/充電' },
+  { id: 'gap_year',        label: '學測後 Gap year' },
   { id: 'short_tour',      label: '遊學團(套裝行程)' },
   { id: 'custom_tour',     label: '客製化遊學' },
   { id: 'pr_immigration',  label: '移民/PR 規劃' },
