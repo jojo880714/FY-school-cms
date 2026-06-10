@@ -33,8 +33,66 @@ interface TuitionTier {
   currency: string;
 }
 
+// Phase 17d — 英語程度過濾用
+interface Program {
+  id: string;
+  school_id: string;
+  entry_level: string | null;
+}
+
+// CEFR 數字化:A1=1 A2=2 B1=3 B2=4 C1=5 C2=6
+const CEFR_SCORE: Record<string, number> = {
+  A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6,
+};
+function toeicToCefr(score: number): string {
+  if (score >= 945) return 'C2';
+  if (score >= 785) return 'C1';
+  if (score >= 550) return 'B2';
+  if (score >= 385) return 'B1';
+  if (score >= 225) return 'A2';
+  return 'A1';
+}
+function ieltsToCefr(score: number): string {
+  if (score >= 8.0) return 'C2';
+  if (score >= 6.5) return 'C1';
+  if (score >= 5.5) return 'B2';
+  if (score >= 4.0) return 'B1';
+  if (score >= 3.0) return 'A2';
+  return 'A1';
+}
+function toeflToCefr(score: number): string {
+  if (score >= 110) return 'C2';
+  if (score >= 94)  return 'C1';
+  if (score >= 72)  return 'B2';
+  if (score >= 42)  return 'B1';
+  if (score >= 20)  return 'A2';
+  return 'A1';
+}
+function getStudentCefr(examType: string, score: number): string | null {
+  if (examType === 'toeic') return toeicToCefr(score);
+  if (examType === 'ielts') return ieltsToCefr(score);
+  if (examType === 'toefl') return toeflToCefr(score);
+  if (examType === 'none_basic') return 'A2';
+  if (examType === 'none_beginner') return 'A1';
+  return null;
+}
+
 const DRAFT_KEY = 'cms_draft';
 const MAX = 5;
+
+// Phase 17e — 出發目的 tag(對齊轉介表諮詢項目)
+const PURPOSE_TAGS = [
+  { id: 'lang_school',     label: '語言進修(語校)' },
+  { id: 'exam_prep',       label: '考試衝刺(多益/雅思/托福)' },
+  { id: 'working_holiday', label: '打工度假' },
+  { id: 'pathway_uni',     label: '銜接升大學' },
+  { id: 'pathway_grad',    label: '銜接升研究所' },
+  { id: 'career_change',   label: '職涯轉換/充電' },
+  { id: 'short_tour',      label: '遊學團(套裝行程)' },
+  { id: 'custom_tour',     label: '客製化遊學' },
+  { id: 'pr_immigration',  label: '移民/PR 規劃' },
+  { id: 'undecided',       label: '尚未確定方向' },
+] as const;
 
 function CampusCard({
   campus,
@@ -46,6 +104,8 @@ function CampusCard({
   overBudget,
   minPrice,
   priceCurrency,
+  levelTooHigh,
+  minEntryLevel,
 }: {
   campus: CampusWithSchool;
   selected: boolean;
@@ -56,6 +116,8 @@ function CampusCard({
   overBudget?: boolean;
   minPrice?: number | null;
   priceCurrency?: string;
+  levelTooHigh?: boolean;
+  minEntryLevel?: string | null;
 }) {
   return (
     <div
@@ -102,6 +164,21 @@ function CampusCard({
           marginLeft: ageBlocked ? '6px' : 0,
         }}>
           最低 ${minPrice.toLocaleString()}{priceCurrency ? ` ${priceCurrency}` : ''}/週
+        </span>
+      )}
+      {levelTooHigh && minEntryLevel && (
+        <span style={{
+          display: 'inline-block',
+          fontSize: '11px',
+          color: '#92400E',
+          background: '#FEF3C7',
+          borderRadius: '4px',
+          padding: '2px 6px',
+          marginTop: '4px',
+          marginBottom: 8,
+          marginLeft: (ageBlocked || overBudget) ? '6px' : 0,
+        }}>
+          建議 {minEntryLevel} 以上
         </span>
       )}
       {campus.metro_station && (
@@ -324,6 +401,12 @@ export function CreatePage() {
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const [budgetCurrency, setBudgetCurrency] = useState<string>('CAD');
   const [allTuitionTiers, setAllTuitionTiers] = useState<TuitionTier[]>([]);
+  // Phase 17d — 英語程度 profile
+  const [examType, setExamType] = useState<string>('');
+  const [examScore, setExamScore] = useState<number | null>(null);
+  const [allPrograms, setAllPrograms] = useState<Program[]>([]);
+  // Phase 17e — 出發目的(多選)
+  const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
   const [searchParams] = useSearchParams();
   const editSlug = searchParams.get('slug');
   const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
@@ -348,6 +431,9 @@ export function CreatePage() {
       // Phase 17c — 載入所有 tuition_tiers 給預算過濾用
       const { data: tiers } = await supabase.from('tuition_tiers').select('*');
       if (tiers) setAllTuitionTiers(tiers as TuitionTier[]);
+      // Phase 17d — 載入所有 programs 給英語程度過濾用
+      const { data: programs } = await supabase.from('programs').select('id, school_id, entry_level');
+      if (programs) setAllPrograms(programs as Program[]);
       setLoading(false);
     }
     load();
@@ -437,6 +523,38 @@ export function CreatePage() {
     const minPrice = getCampusMinPrice(campusId, budgetCurrency);
     if (minPrice === null) return false; // 沒有對應 currency 的資料,不標示
     return minPrice > weeklyBudget;
+  }
+
+  // Phase 17d — 英語程度過濾(軟提示)
+  function isCampusLevelTooHigh(_campusId: string, schoolId: string): boolean {
+    if (!examType) return false;
+    // 非 none_* 模式需要有 examScore
+    if (!examType.startsWith('none') && examScore === null) return false;
+    const studentCefr = getStudentCefr(examType, examScore ?? 0);
+    if (!studentCefr) return false;
+    const programs = allPrograms.filter((p) => p.school_id === schoolId);
+    if (programs.length === 0) return false;
+    // 只要有任一課程門檻 ≤ 學生等級,就不標示
+    return !programs.some((p) => {
+      if (!p.entry_level) return true; // 沒填門檻 → 開放所有人
+      return (CEFR_SCORE[p.entry_level] ?? 0) <= CEFR_SCORE[studentCefr];
+    });
+  }
+  function getCampusMinEntryLevel(schoolId: string): string | null {
+    const programs = allPrograms.filter((p) => p.school_id === schoolId);
+    if (programs.length === 0) return null;
+    const levels = programs.map((p) => p.entry_level).filter(Boolean) as string[];
+    if (levels.length === 0) return null;
+    const scores = levels.map((l) => CEFR_SCORE[l] ?? 0);
+    const minScore = Math.min(...scores);
+    return Object.keys(CEFR_SCORE).find((k) => CEFR_SCORE[k] === minScore) ?? null;
+  }
+
+  // Phase 17e — toggle purpose tag
+  function togglePurpose(id: string) {
+    setSelectedPurposes((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
   }
 
   function toggleCampus(campus: CampusWithSchool) {
@@ -862,8 +980,123 @@ export function CreatePage() {
                 </span>
               )}
             </div>
+
+            {/* 英語程度欄位 (Phase 17d) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '13px', color: '#374151', whiteSpace: 'nowrap' }}>
+                英語程度
+              </label>
+              <select
+                value={examType}
+                onChange={(e) => { setExamType(e.target.value); setExamScore(null); }}
+                style={{
+                  padding: '6px 8px',
+                  fontSize: '13px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  background: 'white',
+                }}
+              >
+                <option value="">— 選填 —</option>
+                <option value="toeic">多益 TOEIC</option>
+                <option value="ielts">雅思 IELTS</option>
+                <option value="toefl">托福 TOEFL iBT</option>
+                <option value="none_basic">無檢定(有基礎)</option>
+                <option value="none_beginner">無檢定(初學)</option>
+              </select>
+              {examType && !examType.startsWith('none') && (
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="分數"
+                  value={examScore ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setExamScore(val === '' ? null : Number(val));
+                  }}
+                  style={{
+                    width: '70px',
+                    padding: '6px 8px',
+                    fontSize: '13px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    outline: 'none',
+                    textAlign: 'center',
+                  }}
+                />
+              )}
+              {examType && (examType.startsWith('none') || examScore !== null) && (() => {
+                const cefr = getStudentCefr(examType, examScore ?? 0);
+                return cefr ? (
+                  <span style={{ fontSize: '11px', color: '#6B7280' }}>
+                    ≈ {cefr}
+                  </span>
+                ) : null;
+              })()}
+              {examType && (
+                <button
+                  onClick={() => { setExamType(''); setExamScore(null); }}
+                  style={{
+                    fontSize: '12px',
+                    color: '#9CA3AF',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0 4px',
+                  }}
+                >
+                  清除
+                </button>
+              )}
+            </div>
+
+            {/* 出發目的 (Phase 17e) */}
+            <div style={{ marginTop: '10px' }}>
+              <div style={{ fontSize: '12px', color: '#374151', marginBottom: '6px' }}>
+                出發目的(可複選)
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {PURPOSE_TAGS.map((tag) => {
+                  const isOn = selectedPurposes.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      onClick={() => togglePurpose(tag.id)}
+                      style={{
+                        fontSize: '12px',
+                        padding: '4px 10px',
+                        borderRadius: '99px',
+                        border: `1px solid ${isOn ? '#378ADD' : '#D1D5DB'}`,
+                        background: isOn ? '#E6F1FB' : 'white',
+                        color: isOn ? '#0C447C' : '#6B7280',
+                        cursor: 'pointer',
+                        transition: 'all 0.1s',
+                      }}
+                    >
+                      {tag.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedPurposes.length > 0 && (
+                <button
+                  onClick={() => setSelectedPurposes([])}
+                  style={{
+                    fontSize: '11px',
+                    color: '#9CA3AF',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    marginTop: '6px',
+                  }}
+                >
+                  清除全部
+                </button>
+              )}
+            </div>
           </div>
-          {/* ── Phase 17a / 17c 結束 ── */}
+          {/* ── Phase 17a / 17c / 17d / 17e 結束 ── */}
 
           {(loading || loadingEdit) ? (
             <div
@@ -901,6 +1134,8 @@ export function CreatePage() {
                       overBudget={isCampusOverBudget(campus.id)}
                       minPrice={getCampusMinPrice(campus.id, budgetCurrency)}
                       priceCurrency={budgetCurrency}
+                      levelTooHigh={isCampusLevelTooHigh(campus.id, campus.school.id)}
+                      minEntryLevel={getCampusMinEntryLevel(campus.school.id)}
                     />
                   </div>
                 );
