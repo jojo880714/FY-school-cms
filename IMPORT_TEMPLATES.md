@@ -59,6 +59,7 @@
 | `english_only_policy_label` | TEXT |  | `違規警告制` | 顧問用語化的英語政策描述(<12 字),Section 3 用(Phase 16a 新增) |
 | `min_age` | INT |  | `18` | 最低收生年齡(NULL = 無限制 / 待補),未來給「依學生年齡過濾」UI 用(Phase 16a 新增) |
 | `top_nationalities` | JSONB |  | `[{"name":"Spain","flag":"🇪🇸"},{"name":"Brazil","flag":"🇧🇷"}]` | 學員國籍排名清單,Section 10 用(Phase 16a 新增) |
+| `persona_match` | 陣列 |  | `exam_prep, pathway_grad, career_change` | 適合的學員人物 tag,**用半形逗號分隔**,從 master list 挑選(Phase 16c 新增):<br>• `exam_prep`(考試衝刺)<br>• `pathway_uni`(銜接升大學)<br>• `pathway_grad`(銜接升研究所)<br>• `working_holiday`(打工度假/WHV 配套)<br>• `career_change`(職涯轉換,鎖定 30+)<br>• `gap_year`(學測後 Gap year)<br>Section 4「人物 × 校」矩陣用 |
 
 **範例 rows:**
 
