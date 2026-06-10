@@ -10,6 +10,7 @@ interface School {
   founded: number | null;
   english_only_policy: boolean;
   accreditation: string[] | null;
+  min_age: number | null;  // Phase 17a
 }
 interface Campus {
   id: string;
@@ -30,20 +31,24 @@ function CampusCard({
   selected,
   onToggle,
   disabled,
+  ageBlocked,
+  minAge,
 }: {
   campus: CampusWithSchool;
   selected: boolean;
   onToggle: (campus: CampusWithSchool) => void;
   disabled: boolean;
+  ageBlocked?: boolean;
+  minAge?: number | null;
 }) {
   return (
     <div
       onClick={() => !disabled || selected ? onToggle(campus) : null}
       style={{
         border: selected ? '2px solid #E8195A' : '1px solid #EAE5DD',
-        background: selected ? '#FCE8EE' : disabled ? '#FAF7F2' : 'white',
-        cursor: disabled && !selected ? 'not-allowed' : 'pointer',
-        opacity: disabled && !selected ? 0.5 : 1,
+        background: selected ? '#FCE8EE' : (disabled || ageBlocked) ? '#FAF7F2' : 'white',
+        cursor: (disabled || ageBlocked) && !selected ? 'not-allowed' : 'pointer',
+        opacity: (disabled || ageBlocked) && !selected ? 0.45 : 1,
         borderRadius: 12,
         padding: '16px',
         transition: 'all 0.15s',
@@ -55,6 +60,19 @@ function CampusCard({
       <div style={{ fontSize: 13, color: '#6B6B6B', marginBottom: 8 }}>
         {campus.city}
       </div>
+      {ageBlocked && minAge && (
+        <span style={{
+          display: 'inline-block',
+          fontSize: '11px',
+          color: '#B91C1C',
+          background: '#FEE2E2',
+          borderRadius: '4px',
+          padding: '2px 6px',
+          marginBottom: 8,
+        }}>
+          需滿 {minAge} 歲
+        </span>
+      )}
       {campus.metro_station && (
         <div style={{ fontSize: 12, color: '#9ca3af' }}>
           📍 {campus.metro_station}
@@ -269,6 +287,8 @@ export function CreatePage() {
   const [result, setResult] = useState<{ url: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  // Phase 17a — 學生年齡 profile(session-only,不存 DB)
+  const [studentAge, setStudentAge] = useState<number | null>(null);
   const [searchParams] = useSearchParams();
   const editSlug = searchParams.get('slug');
   const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
@@ -367,6 +387,14 @@ export function CreatePage() {
   }, [saveDraft]);
 
   function toggleCampus(campus: CampusWithSchool) {
+    // Phase 17a:年齡不符直接擋住(已選的可取消,新選的要符合年齡門檻)
+    const isAlreadySelected = selected.some((c) => c.id === campus.id);
+    if (
+      !isAlreadySelected &&
+      studentAge !== null &&
+      campus.school.min_age !== null &&
+      studentAge < campus.school.min_age
+    ) return;
     setSelected((prev) =>
       prev.find((c) => c.id === campus.id)
         ? prev.filter((c) => c.id !== campus.id)
@@ -656,6 +684,72 @@ export function CreatePage() {
               {selected.length} / {MAX}
             </span>
           </div>
+          {/* ── Phase 17a 學生條件篩選 ── */}
+          <div style={{
+            background: '#F8F9FA',
+            border: '1px solid #EAE5DD',
+            borderRadius: '10px',
+            padding: '14px 16px',
+            marginBottom: '16px',
+          }}>
+            <div style={{
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#6B6B6B',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: '10px',
+            }}>
+              學生條件篩選
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '13px', color: '#374151', whiteSpace: 'nowrap' }}>
+                學生年齡
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={99}
+                placeholder="歲"
+                value={studentAge ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setStudentAge(val === '' ? null : Number(val));
+                }}
+                style={{
+                  width: '70px',
+                  padding: '6px 8px',
+                  fontSize: '13px',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  textAlign: 'center',
+                }}
+              />
+              {studentAge !== null && (
+                <button
+                  onClick={() => setStudentAge(null)}
+                  style={{
+                    fontSize: '12px',
+                    color: '#9CA3AF',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0 4px',
+                  }}
+                >
+                  清除
+                </button>
+              )}
+              {studentAge !== null && (
+                <span style={{ fontSize: '12px', color: '#6B6B6B' }}>
+                  · 不符年齡門檻的學校會自動標示
+                </span>
+              )}
+            </div>
+          </div>
+          {/* ── Phase 17a 結束 ── */}
+
           {(loading || loadingEdit) ? (
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
@@ -675,16 +769,24 @@ export function CreatePage() {
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
             >
-              {allCampuses.map((campus) => (
-                <div key={campus.id}>
-                  <CampusCard
-                    campus={campus}
-                    selected={!!selected.find((c) => c.id === campus.id)}
-                    onToggle={toggleCampus}
-                    disabled={selected.length >= MAX}
-                  />
-                </div>
-              ))}
+              {allCampuses.map((campus) => {
+                const ageBlocked =
+                  studentAge !== null &&
+                  campus.school.min_age !== null &&
+                  studentAge < campus.school.min_age;
+                return (
+                  <div key={campus.id}>
+                    <CampusCard
+                      campus={campus}
+                      selected={!!selected.find((c) => c.id === campus.id)}
+                      onToggle={toggleCampus}
+                      disabled={selected.length >= MAX}
+                      ageBlocked={ageBlocked}
+                      minAge={campus.school.min_age}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
