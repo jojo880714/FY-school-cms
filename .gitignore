@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Secrets / config not to commit (Demo-deploy hygiene)
+.env
+.env.local
+.env.production
+.mcp.json
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
