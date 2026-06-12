@@ -264,6 +264,38 @@ RWD:
 
 ---
 
+## Phase 18b — Edge Function 國籍卡切 nationality_breakdown + 廢 top_nationalities [P2] 🔜
+
+> Schema 重疊清理 + LP 卡片樣式分派(A/B/D)合併執行。本節為 schema 部分,LP 樣式另記。
+
+**背景**:Phase 16a 加的 `schools.top_nationalities`(無 pct)與 Phase 18a 加的 `schools.nationality_breakdown`(含 pct)資料重疊。當前 EF Section 10 仍只讀 `top_nationalities`,`nationality_breakdown` 寫進去但沒被渲染。
+
+**決策**(2026-06-12):**18b 一刀切。現在不 DROP,標 deprecated。**
+- ❌ 現在 DROP:EF 在 18b 才解凍,現在改會踩凍結檔
+- ❌ 共存:雙寫成本長期累積、易不一致
+- ✅ **18b 一刀**:EF 解凍那次連同切讀 + DROP COLUMN + IMPORT_TEMPLATES 更新一起做
+
+**14c~18b 過渡期(凍結耦合)**:
+- EF 凍到 18b,且現在讀 `top_nationalities`
+- **14c 真實資料匯入腳本必須對同一所學校同時寫 `top_nationalities` + `nationality_breakdown`**
+- 否則 Section 10 國籍卡會空白(EF 找不到 top_nationalities 就跳過)
+- 想在 18b 前單獨切 Section 10 到 `nationality_breakdown` → 需動凍結檔 + redeploy,**預設不做**
+
+**18b 執行步驟(三件事同一個 commit 鏈)**:
+1. EF `index.ts` line 340-343:`top_nationalities` → `nationality_breakdown`,渲染加上 pct(長條 / 百分比文字)
+2. Migration:`ALTER TABLE schools DROP COLUMN top_nationalities`
+3. IMPORT_TEMPLATES.md:移除 `top_nationalities` 一節、清掉 deprecated 註記、`nationality_breakdown.pct` 標必填(現已標)
+
+**為什麼 backfill 不是 blocker**:14c 排在 18b 前,匯入 SOP 已要求雙寫 + pct 必填,到 18b 時 demo 那批無 pct 的 `top_nationalities` 已被真實資料整批取代。
+
+**驗收條件**
+- [ ] EF 切讀 `nationality_breakdown`,Section 10 國籍卡顯示 pct
+- [ ] `schools.top_nationalities` 已 DROP(`\d schools` 不見此欄)
+- [ ] IMPORT_TEMPLATES.md 不再提及 `top_nationalities`
+- [ ] 14c 匯入的所有學校 row 之 `nationality_breakdown` 有 ≥1 筆且每筆都有 pct
+
+---
+
 ## 跨 Phase 通用品質要求 [P0,每個 Phase 同步交付]
 
 | 項目 | 要求 |
@@ -295,3 +327,4 @@ RWD:
 | 日期 | 變更 |
 |---|---|
 | 2026-05-26 | 初版建立(Phase 5 完成後) |
+| 2026-06-12 | 加 Phase 18b 段(EF 切 nationality_breakdown + DROP top_nationalities,14c 過渡期凍結耦合說明) |
