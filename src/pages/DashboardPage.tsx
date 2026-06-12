@@ -133,6 +133,14 @@ export function DashboardPage() {
       .from('generated_pages')
       .update({ consultation_notes: notes || null })
       .eq('slug', slug);
+    // optimistic update：讓 icon 立刻從「+ 筆記」變「📝 筆記」
+    setPages(prev =>
+      prev.map(p =>
+        p.slug === slug
+          ? { ...p, consultation_notes: notes || null }
+          : p
+      )
+    );
   }
 
   // Phase 19d — 複製到大表 (Google Sheet 備注欄格式)
