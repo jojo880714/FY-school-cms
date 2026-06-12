@@ -18,6 +18,11 @@ interface GeneratedPage {
   created_at: string;
   updated_at: string | null;
   deleted_at: string | null;
+  // Phase 19b/19a
+  student_name: string | null;
+  student_contact: string | null;
+  consultation_date: string | null;
+  consultation_notes: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -63,7 +68,7 @@ export function DashboardPage() {
 
     const term = debouncedSearch.trim();
     if (term) {
-      q = q.or(`title.ilike.%${term}%,slug.ilike.%${term}%`);
+      q = q.or(`title.ilike.%${term}%,slug.ilike.%${term}%,student_name.ilike.%${term}%,student_contact.ilike.%${term}%`);
     }
 
     const { data, count } = await q
@@ -241,7 +246,7 @@ export function DashboardPage() {
           </div>
           <input
             type="text"
-            placeholder="搜尋頁面標題或 slug..."
+            placeholder="搜尋學生姓名、聯絡方式、標題..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -291,13 +296,6 @@ export function DashboardPage() {
                   ? '舊資料'
                   : `${schoolCount} 校 / ${campusCount} 校區`;
               const openUrl = page.public_url || page.html_url;
-              const editedDate =
-                page.updated_at &&
-                new Date(page.updated_at).getTime() -
-                  new Date(page.created_at).getTime() >
-                  1000
-                  ? new Date(page.updated_at).toLocaleDateString('zh-TW')
-                  : null;
               return (
               <div
                 key={page.id}
@@ -319,25 +317,41 @@ export function DashboardPage() {
                       marginBottom: '4px',
                     }}
                   >
-                    {page.title || page.slug}
+                    {page.student_name || page.title || page.slug}
                   </div>
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: '#9ca3af',
-                      display: 'flex',
-                      gap: '8px',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span>{new Date(page.created_at).toLocaleDateString('zh-TW')}</span>
-                    <span>·</span>
-                    <span>{metaText}</span>
-                    {editedDate && (
-                      <>
-                        <span>·</span>
-                        <span>編輯於 {editedDate}</span>
-                      </>
+                  {/* 副標第一行：學生聯絡 + 日期 */}
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#9CA3AF',
+                    marginTop: '3px',
+                    display: 'flex',
+                    gap: '6px',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                  }}>
+                    {page.student_contact && (
+                      <span style={{ color: '#6B7280' }}>{page.student_contact}</span>
+                    )}
+                    {page.student_contact && (
+                      <span>·</span>
+                    )}
+                    <span>
+                      {page.consultation_date
+                        ? page.consultation_date
+                        : new Date(page.created_at).toLocaleDateString('zh-TW')}
+                    </span>
+                  </div>
+                  {/* 副標第二行：學校數量 + 舊資料 fallback */}
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#9CA3AF',
+                    marginTop: '2px',
+                  }}>
+                    {metaText}
+                    {page.student_name && page.title && page.title !== page.student_name && (
+                      <span style={{ marginLeft: '6px', color: '#D1D5DB' }}>
+                        · {page.title}
+                      </span>
                     )}
                   </div>
                 </div>
