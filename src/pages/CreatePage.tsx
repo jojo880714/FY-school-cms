@@ -448,6 +448,8 @@ export function CreatePage() {
   const [maxWeeks, setMaxWeeks] = useState<number | null>(null);
   // Q3 opt-in — 是否將學生條件加入公開頁
   const [includeProfileInPage, setIncludeProfileInPage] = useState<boolean>(false);
+  // Phase 17-style — LP 卡片樣式 (A 決策 / B 費用 / D 資訊密集)
+  const [selectedStyle, setSelectedStyle] = useState<'A' | 'B' | 'D'>('A');
   const [searchParams] = useSearchParams();
   const editSlug = searchParams.get('slug');
   const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
@@ -748,6 +750,7 @@ export function CreatePage() {
               selectedPurposes: selectedPurposes,
               maxWeeks: maxWeeks,
             } : null,
+            style: selectedStyle,
           },
         }
       );
@@ -1426,6 +1429,62 @@ export function CreatePage() {
                 boxSizing: 'border-box',
               }}
             />
+          </div>
+
+          {/* LP 卡片樣式 (Phase 17-style) */}
+          <div style={{
+            background: '#F8F9FA',
+            border: '0.5px solid #E5E7EB',
+            borderRadius: '10px',
+            padding: '14px 16px',
+            marginBottom: '12px',
+          }}>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              color: '#6B7280',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: '10px',
+            }}>
+              LP 展示樣式
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {([
+                { id: 'A', label: 'A 決策型', desc: '人物標籤 + 關鍵數字' },
+                { id: 'B', label: 'B 費用型', desc: '課程費 / 住宿費 / 水位' },
+                { id: 'D', label: 'D 資訊密集型', desc: '所有規格一格看完' },
+              ] as const).map(({ id, label, desc }) => (
+                <button
+                  key={id}
+                  onClick={() => setSelectedStyle(id)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 8px',
+                    borderRadius: '8px',
+                    border: `1.5px solid ${selectedStyle === id ? '#378ADD' : '#E5E7EB'}`,
+                    background: selectedStyle === id ? '#E6F1FB' : 'white',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: selectedStyle === id ? '#0C447C' : '#374151',
+                    marginBottom: '2px',
+                  }}>
+                    {label}
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#9CA3AF',
+                  }}>
+                    {desc}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
