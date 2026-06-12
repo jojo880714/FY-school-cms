@@ -36,6 +36,9 @@ export function DashboardPage() {
   const [pageIdx, setPageIdx] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [stats, setStats] = useState({ total: 0, published: 0, thisMonth: 0 });
+  // Phase 19d
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+  const [notesMap, setNotesMap] = useState<Record<string, string>>({});
 
   // 搜尋去抖動（300ms）
   useEffect(() => {
@@ -121,6 +124,36 @@ export function DashboardPage() {
       return;
     }
     await Promise.all([loadPages(), loadStats()]);
+  }
+
+  // Phase 19d — 諮詢備注存檔
+  async function saveNotes(slug: string) {
+    const notes = notesMap[slug] ?? '';
+    await supabase
+      .from('generated_pages')
+      .update({ consultation_notes: notes || null })
+      .eq('slug', slug);
+  }
+
+  // Phase 19d — 複製到大表 (Google Sheet 備注欄格式)
+  function copyToSheet(page: GeneratedPage) {
+    const date = page.consultation_date
+      ?? new Date(page.created_at).toLocaleDateString('zh-TW');
+    const name = page.student_name ?? '—';
+    const contact = page.student_contact ?? '—';
+    const url = page.public_url || page.html_url || '—';
+    const notes = notesMap[page.slug] ?? page.consultation_notes ?? '';
+
+    const text = [
+      `【放洋諮詢紀錄】${date}`,
+      `學生：${name}｜${contact}`,
+      `LP：${url}`,
+      notes ? `備注：${notes}` : null,
+    ].filter(Boolean).join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert('已複製到剪貼簿，請貼進 Google Sheet 備注欄');
+    });
   }
 
   return (
@@ -307,6 +340,7 @@ export function DashboardPage() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  flexWrap: 'wrap',
                 }}
               >
                 <div>
@@ -414,7 +448,96 @@ export function DashboardPage() {
                   >
                     🗑
                   </button>
+                  {/* Phase 19d — 筆記 toggle */}
+                  <button
+                    onClick={() => {
+                      setExpandedSlug(expandedSlug === page.slug ? null : page.slug);
+                      if (!notesMap[page.slug] && page.consultation_notes) {
+                        setNotesMap(prev => ({
+                          ...prev,
+                          [page.slug]: page.consultation_notes!,
+                        }));
+                      }
+                    }}
+                    style={{
+                      fontSize: '12px',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid #E5E7EB',
+                      background: expandedSlug === page.slug ? '#F0F9FF' : 'white',
+                      color: '#6B7280',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {page.consultation_notes ? '📝 筆記' : '+ 筆記'}
+                  </button>
                 </div>
+                {/* Phase 19d — 筆記展開面板 */}
+                {expandedSlug === page.slug && (
+                  <div style={{
+                    marginTop: '10px',
+                    paddingTop: '10px',
+                    borderTop: '1px solid #F3F4F6',
+                    width: '100%',
+                  }}>
+                    <textarea
+                      placeholder="諮詢備注：學生偏好、下一步行動、家長意見..."
+                      value={notesMap[page.slug] ?? page.consultation_notes ?? ''}
+                      onChange={(e) => setNotesMap(prev => ({
+                        ...prev,
+                        [page.slug]: e.target.value,
+                      }))}
+                      style={{
+                        width: '100%',
+                        minHeight: '80px',
+                        padding: '8px 10px',
+                        fontSize: '13px',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '6px',
+                        outline: 'none',
+                        resize: 'vertical',
+                        fontFamily: 'inherit',
+                        color: '#374151',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px',
+                      marginTop: '8px',
+                      justifyContent: 'flex-end',
+                    }}>
+                      <button
+                        onClick={() => copyToSheet(page)}
+                        style={{
+                          fontSize: '12px',
+                          padding: '5px 12px',
+                          borderRadius: '6px',
+                          border: '1px solid #E5E7EB',
+                          background: 'white',
+                          color: '#6B7280',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        📋 複製到大表
+                      </button>
+                      <button
+                        onClick={() => saveNotes(page.slug)}
+                        style={{
+                          fontSize: '12px',
+                          padding: '5px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: '#2563EB',
+                          color: 'white',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        儲存備注
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               );
             })}
