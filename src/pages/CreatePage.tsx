@@ -450,6 +450,9 @@ export function CreatePage() {
   const [includeProfileInPage, setIncludeProfileInPage] = useState<boolean>(false);
   // Phase 17-style — LP 卡片樣式 (A 決策 / B 費用 / D 資訊密集)
   const [selectedStyle, setSelectedStyle] = useState<'A' | 'B' | 'D'>('A');
+  // Phase 19b — 學生基本資料
+  const [studentName, setStudentName] = useState<string>('');
+  const [studentContact, setStudentContact] = useState<string>('');
   const [searchParams] = useSearchParams();
   const editSlug = searchParams.get('slug');
   const [loadingEdit, setLoadingEdit] = useState(!!editSlug);
@@ -756,6 +759,18 @@ export function CreatePage() {
       );
       if (fnError) throw fnError;
       if (!result.success) throw new Error(result.error);
+
+      // Phase 19b — 把學生資料寫進 generated_pages
+      // consultation_date 不需寫,DB default CURRENT_DATE 自動填
+      if (studentName || studentContact) {
+        await supabase
+          .from('generated_pages')
+          .update({
+            student_name: studentName || null,
+            student_contact: studentContact || null,
+          })
+          .eq('slug', slug);
+      }
 
       setResult({ url: result.url });
       if (!editSlug) localStorage.removeItem(DRAFT_KEY);
@@ -1429,6 +1444,78 @@ export function CreatePage() {
                 boxSizing: 'border-box',
               }}
             />
+          </div>
+
+          {/* 學生基本資料 (Phase 19b) */}
+          <div style={{
+            background: '#F8F9FA',
+            border: '0.5px solid #E5E7EB',
+            borderRadius: '10px',
+            padding: '14px 16px',
+            marginBottom: '12px',
+          }}>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              color: '#6B7280',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: '10px',
+            }}>
+              學生資料
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '140px' }}>
+                <label style={{
+                  fontSize: '11px',
+                  color: '#9CA3AF',
+                  display: 'block',
+                  marginBottom: '4px',
+                }}>
+                  學生姓名
+                </label>
+                <input
+                  type="text"
+                  placeholder="王小明"
+                  value={studentName}
+                  onChange={(e) => setStudentName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '7px 10px',
+                    fontSize: '13px',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    outline: 'none',
+                    background: 'white',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: '140px' }}>
+                <label style={{
+                  fontSize: '11px',
+                  color: '#9CA3AF',
+                  display: 'block',
+                  marginBottom: '4px',
+                }}>
+                  聯絡方式
+                </label>
+                <input
+                  type="text"
+                  placeholder="LINE ID / 電話"
+                  value={studentContact}
+                  onChange={(e) => setStudentContact(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '7px 10px',
+                    fontSize: '13px',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    outline: 'none',
+                    background: 'white',
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* LP 卡片樣式 (Phase 17-style) */}
