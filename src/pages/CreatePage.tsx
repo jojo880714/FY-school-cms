@@ -97,6 +97,13 @@ const PURPOSE_TAGS = [
   { id: 'undecided',       label: '尚未確定方向' },
 ] as const;
 
+// Persona vocabulary 對齊:這 4 個 purpose 不參與 persona 計分(IMPORT_TEMPLATES.md 有對齊說明)
+// - lang_school / undecided:永久非 persona(零區辨力 / 學生狀態)
+// - short_tour / custom_tour:暫時 passthrough,之後升級為 schools.has_short_tour / has_custom_tour BOOL
+// 計分邏輯:從 selectedPurposes 濾掉這 4 個,剩下的照常對 school.persona_match 計分。
+// 注意:這 4 個 tag 在 UI 上仍正常顯示與可選,只是不傳入計分公式。
+const PASSTHROUGH_PURPOSES: readonly string[] = ['lang_school', 'short_tour', 'custom_tour', 'undecided'];
+
 function CampusCard({
   campus,
   selected,
@@ -622,10 +629,17 @@ export function CreatePage() {
   }
 
   // Phase 17b — 依學生 selectedPurposes 與學校 persona_match[] 比對
+  // Persona vocabulary 對齊:先把 PASSTHROUGH_PURPOSES 從輸入集濾掉,再用剩下的計分。
+  // 這樣「lang_school + exam_prep」中 lang_school 被濾掉,exam_prep 仍照常算分。
+  // 濾掉後空集 → score 0(badge 不亮、排序中性),不會造成「選擇被忽略」的雜訊。
   function getPersonaMatchScore(campus: CampusWithSchool): number {
     if (selectedPurposes.length === 0) return 0;
+    const scoringPurposes = selectedPurposes.filter(
+      (p) => !PASSTHROUGH_PURPOSES.includes(p)
+    );
+    if (scoringPurposes.length === 0) return 0;
     if (!campus.school.persona_match?.length) return 0;
-    return selectedPurposes.filter((p) =>
+    return scoringPurposes.filter((p) =>
       campus.school.persona_match!.includes(p)
     ).length;
   }

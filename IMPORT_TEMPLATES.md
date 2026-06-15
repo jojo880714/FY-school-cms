@@ -59,7 +59,7 @@
 | `english_only_policy_label` | TEXT |  | `違規警告制` | 顧問用語化的英語政策描述(<12 字),Section 3 用(Phase 16a 新增) |
 | `min_age` | INT |  | `18` | 最低收生年齡(NULL = 無限制 / 待補),未來給「依學生年齡過濾」UI 用(Phase 16a 新增) |
 | `nationality_breakdown` | JSONB | ✅ | `[{"flag":"🇪🇸","name":"西班牙","pct":24},{"flag":"🇧🇷","name":"巴西","pct":18}]` | 前 5-7 個主要學生國籍 **含百分比**。每筆物件含 `flag` / `name` / `pct` 三欄,**`pct` 必填**(數字,顧問據實估算,總和不需精確 100)。Section 10 國籍卡的唯一資料源 — Edge Function 渲染時會顯示 flag、name、pct 文字 + pct 條狀圖。建議每年更新一次(Phase 18a 新增,Phase 18b 起取代已廢棄的 `top_nationalities`)。 |
-| `persona_match` | 陣列 |  | `exam_prep, pathway_grad, career_change` | 適合的學員人物 tag,**用半形逗號分隔**,從 master list 挑選(Phase 16c 新增):<br>• `exam_prep`(考試衝刺)<br>• `pathway_uni`(銜接升大學)<br>• `pathway_grad`(銜接升研究所)<br>• `working_holiday`(打工度假/WHV 配套)<br>• `career_change`(職涯轉換,鎖定 30+)<br>• `gap_year`(學測後 Gap year)<br>Section 4「人物 × 校」矩陣用 |
+| `persona_match` | 陣列 |  | `exam_prep, pathway_grad, career_change` | 適合的學員人物 tag,**用半形逗號分隔**,從 master list 挑選(Phase 16c 新增,2026-06-15 對齊擴為 7):<br>• `exam_prep`(考試衝刺)<br>• `pathway_uni`(銜接升大學)<br>• `pathway_grad`(銜接升研究所)<br>• `working_holiday`(打工度假/WHV 配套)<br>• `career_change`(職涯轉換,鎖定 30+)<br>• `gap_year`(學測後 Gap year)<br>• `pr_immigration`(移民/PR 規劃 — 對應澳洲 PR 友善、加拿大 PNP 等)<br>⚠ **`pr_immigration` 計分已就緒,但 Edge Function 中文 label 排在 18b backlog**;在 18b 前匯入此 tag,Section 1/4 的公開頁會以原始 key 顯示,不會有中文 label。<br>Section 4「人物 × 校」矩陣用 |
 
 **範例 rows:**
 
@@ -229,6 +229,25 @@
 - 缺資料就留空白,**不要瞎填**
 - 顧問才知道哪些欄位對「打動學生」最重要
 
+### Persona vocabulary 對齊(顧問了解就好,匯入時不影響填表)
+
+CreatePage 學生 purpose 選單給學生勾 11 個 tag,但 `schools.persona_match` master list **只有 7 個 tag 真正參與計分排序**。其他 4 個 tag 在前端 UI 仍可勾選,但**不會傳入計分公式**,目的是避免出現「沒區辨力的 tag 把所有學校都拉成滿分」或「學生狀態被當成學校屬性」這類雜訊。
+
+**有效計分 tag(7 個,可放進 `schools.persona_match`)**:
+`exam_prep` / `pathway_uni` / `pathway_grad` / `working_holiday` / `career_change` / `gap_year` / `pr_immigration`
+
+**UI-only 不參與計分(4 個,**不要**放進 `schools.persona_match`)**:
+
+**(a) 永久非 persona** — 設計上就不會成為學校屬性,以後也不會結構化進 schema:
+- `lang_school`(語言進修)— 所有語校都符合,零區辨力,放進去等於所有學校滿分
+- `undecided`(尚未確定方向)— 學生狀態,不是學校屬性
+
+**(b) 暫時 passthrough** — 有區辨力,但屬於「學校有沒有這個產品」而不是「學生 persona」。將來會升級成獨立 BOOL 欄位(`schools.has_short_tour` / `schools.has_custom_tour`),那時再從前端傳入:
+- `short_tour`(遊學團套裝行程)
+- `custom_tour`(客製化遊學)
+
+> ⚠ **填 `schools.persona_match` 時注意**:只用上面有效計分 7 個 tag。把 `lang_school` / `short_tour` / `custom_tour` / `undecided` 寫進去,前端計分時會被濾掉,不會被使用,但 EF 公開頁可能會顯示原始字串造成混亂。
+
 ---
 
 ## 8. 給 Claude 的訊號
@@ -263,3 +282,4 @@ schools / campuses 那兩張表先匯入,其他下次
 |---|---|
 | 2026-06-01 | Phase 14b 初版 |
 | 2026-06-01 | Phase 15a 同步:schools 加 4 欄(class_size_typical / class_size_max / strengths / suitable_for)、programs 加 2 欄(entry_level / outcome_level) |
+| 2026-06-15 | Persona vocabulary 對齊:master list 6→7(加 `pr_immigration`);新增「UI-only purposes」段(永久非 persona / 暫時 passthrough 兩類);CreatePage 計分濾除修正。EF 中文 label 排 18b backlog。 |

@@ -356,3 +356,4 @@ RWD:
 | 2026-06-12 | 加 Phase 18b 段(EF 切 nationality_breakdown + DROP top_nationalities,14c 過渡期凍結耦合說明) |
 | 2026-06-15 | Phase 18b sub-track 1 落地(EF v26 切讀 + DROP COLUMN);sub-track 2 LP A/B/D 樣式分派獨立列為 🔜 |
 | 2026-06-15 | Phase 18b sub-track 2 落地(EF v27 + Section 1 三種 overview render variants) |
+| 2026-06-15 | Persona vocabulary 對齊第一批:master list 6→7(加 `pr_immigration`);4 個 UI-only passthrough(`lang_school` / `short_tour` / `custom_tour` / `undecided`);CreatePage `getPersonaMatchScore` 加 passthrough 濾除。EF `personaLabels` 加 `pr_immigration` 中文 label + redeploy 排 18b backlog。 |
