@@ -41,8 +41,10 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { schoolsInfo, selectedFields, title, slug, studentProfile } = await req.json();
-    console.log("Received schools:", schoolsInfo?.length, "slug:", slug);
+    const { schoolsInfo, selectedFields, title, slug, studentProfile, style } = await req.json();
+    // Phase 18b sub-track 2: A 決策 / B 費用 / D 資訊密集。舊頁無 style → 預設 A
+    const overviewStyle: 'A' | 'B' | 'D' = (style === 'B' || style === 'D') ? style : 'A';
+    console.log("Received schools:", schoolsInfo?.length, "slug:", slug, "style:", overviewStyle);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -102,33 +104,152 @@ serve(async (req: Request) => {
       return `<tr>\n              <td>${row.label}</td>\n              ${cells}\n            </tr>`;
     }).join("\n            ");
 
-    // 5. Overview cards
-    const overviewCards = schools.map((item: any) => {
+    // 5. Overview cards — Phase 18b sub-track 2: A 決策 / B 費用 / D 資訊密集
+    // 共用 helpers
+    const cityList = (item: any) =>
+      [...new Set((item.campuses || []).map((c: any) => c.city))].join("、") || "—";
+    const classSizeText = (s: any) => s.class_size_typical
+      ? `${s.class_size_typical}${s.class_size_max ? "/" + s.class_size_max : ""} 人`
+      : "—";
+    const avgTuition = (item: any): { value: number, currency: string } | null => {
+      const tiers = (item.tiers || []);
+      if (tiers.length === 0) return null;
+      const sum = tiers.reduce((a: number, t: any) => a + Number(t.price_per_week || 0), 0);
+      const currency = tiers.find((t: any) => t.currency)?.currency || 'CAD';
+      return { value: Math.round(sum / tiers.length), currency };
+    };
+    const minHousing = (item: any): { value: number, currency: string } | null => {
+      const housing = (item.housing || []);
+      if (housing.length === 0) return null;
+      const min = Math.min(...housing.map((h: any) => Number(h.price_per_week || 0)));
+      const currency = housing.find((h: any) => h.currency)?.currency || 'CAD';
+      return { value: min, currency };
+    };
+    // 水位:用 tuition+housing 合計,跨校共用同一個 max(注意:跨幣別不換算,僅同幣比較才準)
+    const totalsForBar = schools.map((it: any) => {
+      const t = avgTuition(it)?.value || 0;
+      const h = minHousing(it)?.value || 0;
+      return t + h;
+    });
+    const maxTotal = Math.max(1, ...totalsForBar);
+    const personaLabels: Record<string, string> = {
+      exam_prep: '考試衝刺', pathway_uni: '銜接升大學', pathway_grad: '銜接升研究所',
+      working_holiday: '打工度假', career_change: '職涯轉換', gap_year: '學測後 Gap year',
+    };
+
+    function renderA(item: any): string {
       const s = item.school;
-      const cities = [...new Set((item.campuses || []).map((c: any) => c.city))].join("、");
-      const classSize = s.class_size_typical
-        ? `${s.class_size_typical}${s.class_size_max ? "/" + s.class_size_max : ""} 人`
-        : "—";
-      const strengthsTags = (s.strengths || []).length > 0
-        ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${(s.strengths || []).map((t: string) => `<span class="city-tag">${t}</span>`).join("")}</div>`
+      const oneLiner = s.one_liner
+        ? `<div style="font-size:16px;line-height:1.7;color:var(--color-accent);font-weight:500;margin-bottom:12px">${s.one_liner}</div>`
         : "";
+      const personas = (s.persona_match || []).length > 0
+        ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${(s.persona_match || []).map((p: string) =>
+            `<span class="city-tag" style="background:var(--color-primary);color:white;font-weight:600">${personaLabels[p] || p}</span>`).join("")}</div>`
+        : "";
+      const suitable = (s.suitable_for || []).length > 0
+        ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${(s.suitable_for || []).map((t: string) =>
+            `<span class="city-tag">${t}</span>`).join("")}</div>`
+        : "";
+      const yearsOld = s.founded ? `${new Date().getFullYear() - s.founded}年` : "—";
       return `
       <div class="school-card">
-        <div class="card-header">
-          <h3>${s.name}</h3>
-          <p>${s.full_name}</p>
-        </div>
+        <div class="card-header"><h3>${s.name}</h3><p>${s.full_name}</p></div>
         <div class="card-body">
-          <div class="card-row"><span class="card-label">城市</span><span class="card-value">${cities || "—"}</span></div>
-          <div class="card-row"><span class="card-label">班級</span><span class="card-value">${classSize}</span></div>
-          <div class="card-row"><span class="card-label">創立</span><span class="card-value">${s.founded ? s.founded + "年" : "—"}</span></div>
-          <div class="card-row"><span class="card-label">英語政策</span><span class="card-value">${s.english_only_policy ? "✓ English Only" : "無強制"}</span></div>
-          <div class="card-row"><span class="card-label">認證</span><span class="card-value">${(s.accreditation || []).join("、") || "—"}</span></div>
+          ${oneLiner}
+          ${personas}
+          ${suitable}
+          <div class="card-row"><span class="card-label">城市</span><span class="card-value">${cityList(item)}</span></div>
+          <div class="card-row"><span class="card-label">班級</span><span class="card-value">${classSizeText(s)}</span></div>
           <div class="card-row"><span class="card-label">國籍</span><span class="card-value">${s.nationality_count ? s.nationality_count + "+ 國" : "—"}</span></div>
-          ${strengthsTags}
+          <div class="card-row"><span class="card-label">創立至今</span><span class="card-value">${yearsOld}</span></div>
           ${item.note ? `<div class="advisor-note"><div class="advisor-note-label">顧問備注</div><div class="advisor-note-text">${item.note}</div></div>` : ""}
         </div>
       </div>`;
+    }
+
+    function renderB(item: any, idx: number): string {
+      const s = item.school;
+      const t = avgTuition(item);
+      const h = minHousing(item);
+      const tuitionText = t ? `${t.currency} $${t.value.toLocaleString()}` : "—";
+      const housingText = h ? `${h.currency} $${h.value.toLocaleString()}` : "—";
+      const total = totalsForBar[idx];
+      const barWidth = Math.round(total / maxTotal * 100);
+      const totalCurrency = t?.currency || h?.currency || '';
+      return `
+      <div class="school-card">
+        <div class="card-header"><h3>${s.name}</h3><p>${cityList(item)}</p></div>
+        <div class="card-body">
+          <div style="display:flex;gap:14px;margin-bottom:14px">
+            <div style="flex:1">
+              <div style="font-size:11px;color:var(--color-text-muted);margin-bottom:4px">課程費 / 週(平均)</div>
+              <div style="font-size:22px;font-weight:700;color:var(--color-text);font-variant-numeric:tabular-nums">${tuitionText}</div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:11px;color:var(--color-text-muted);margin-bottom:4px">住宿費 / 週(最低)</div>
+              <div style="font-size:22px;font-weight:700;color:var(--color-text);font-variant-numeric:tabular-nums">${housingText}</div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+              <span style="font-size:11px;color:var(--color-text-muted)">每週總開銷水位</span>
+              <span style="font-size:12px;color:var(--color-text-muted);font-variant-numeric:tabular-nums">${totalCurrency} $${total.toLocaleString()}</span>
+            </div>
+            <div style="height:6px;background:#F0E9DD;border-radius:3px;overflow:hidden">
+              <div style="width:${barWidth}%;height:100%;background:var(--color-primary)"></div>
+            </div>
+            <p style="font-size:10px;color:var(--color-text-muted);margin-top:6px">滿格代表本頁學校中最高週費。跨幣別未換算,同幣比較較準。</p>
+          </div>
+          ${item.note ? `<div class="advisor-note" style="margin-top:14px"><div class="advisor-note-label">顧問備注</div><div class="advisor-note-text">${item.note}</div></div>` : ""}
+        </div>
+      </div>`;
+    }
+
+    function renderD(item: any): string {
+      const s = item.school;
+      const oneLiner = s.one_liner
+        ? `<div style="font-size:13px;line-height:1.6;color:var(--color-accent);font-style:italic;margin-bottom:10px">${s.one_liner}</div>`
+        : "";
+      const englishPolicy = s.english_only_policy_label
+        ? s.english_only_policy_label
+        : (s.english_only_policy ? "✓ English Only" : "無強制");
+      const programCount = (item.programs || []).length;
+      const housingTypes = [...new Set((item.housing || []).map((h: any) => h.type))].join("、") || "—";
+      const personasChips = (s.persona_match || []).length > 0
+        ? (s.persona_match || []).map((p: string) =>
+            `<span class="city-tag" style="background:var(--color-primary-tint);color:var(--color-primary-hover)">${personaLabels[p] || p}</span>`).join("")
+        : "";
+      const suitableChips = (s.suitable_for || []).map((t: string) =>
+        `<span class="city-tag">${t}</span>`).join("");
+      const strengthsTags = (s.strengths || []).map((t: string) =>
+        `<span class="city-tag">${t}</span>`).join("");
+      const allChips = personasChips + suitableChips + strengthsTags;
+      const chipsBlock = allChips
+        ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${allChips}</div>`
+        : "";
+      return `
+      <div class="school-card">
+        <div class="card-header"><h3>${s.name}</h3><p>${s.full_name}</p></div>
+        <div class="card-body" style="font-size:12px">
+          ${oneLiner}
+          <div class="card-row"><span class="card-label">城市</span><span class="card-value">${cityList(item)}</span></div>
+          <div class="card-row"><span class="card-label">班級</span><span class="card-value">${classSizeText(s)}</span></div>
+          <div class="card-row"><span class="card-label">創立</span><span class="card-value">${s.founded ? s.founded + "年" : "—"}</span></div>
+          <div class="card-row"><span class="card-label">英語政策</span><span class="card-value">${englishPolicy}</span></div>
+          <div class="card-row"><span class="card-label">認證</span><span class="card-value">${(s.accreditation || []).join("、") || "—"}</span></div>
+          <div class="card-row"><span class="card-label">國籍</span><span class="card-value">${s.nationality_count ? s.nationality_count + "+ 國" : "—"}</span></div>
+          <div class="card-row"><span class="card-label">課程</span><span class="card-value">${programCount} 種</span></div>
+          <div class="card-row"><span class="card-label">住宿</span><span class="card-value">${housingTypes}</span></div>
+          ${chipsBlock}
+          ${item.note ? `<div class="advisor-note"><div class="advisor-note-label">顧問備注</div><div class="advisor-note-text">${item.note}</div></div>` : ""}
+        </div>
+      </div>`;
+    }
+
+    const overviewCards = schools.map((item: any, idx: number) => {
+      if (overviewStyle === 'B') return renderB(item, idx);
+      if (overviewStyle === 'D') return renderD(item);
+      return renderA(item);
     }).join("\n");
 
     // 6. Program cards

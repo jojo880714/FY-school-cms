@@ -307,15 +307,18 @@ RWD:
 
 ---
 
-## Phase 18b sub-track 2 — LP A/B/D 卡片樣式分派 [P2] 🔜
+## Phase 18b sub-track 2 — LP A/B/D 卡片樣式分派 [P2] ✅
 
-> EF 已解凍,接下來 redeploy 成本不高 — 但需要先設計三種版型才能動。
+> Scope:只換 Section 1 OVERVIEW_CARDS,其餘 9 個 section 不動(甲案決策)。
 
-**現況**:
-- CreatePage 已送 `style: 'A' | 'B' | 'D'` 給 EF,EF 還沒讀
-- 「A 決策 / B 費用 / D 資訊密集」目前只有命名,沒有 HTML / 欄位對應
-
-**啟動前需要**:三種樣式各自的欄位清單與版型 mockup(或文字描述也行)
+**結果**(2026-06-15):**已落地**(EF v27)
+- EF 解構加 `style` 參數,舊頁無 style → 預設 'A'
+- 三個 render function:
+  - `renderA`(決策型):one_liner(大字 accent)+ persona_match chips(主色高亮)+ suitable_for chips + 4 行統計(城市 / 班級 / 國籍 / 創立至今)
+  - `renderB`(費用型):課程費平均(大字)/ 住宿費最低(大字)+ 每週總開銷水位條(本頁最高 = 滿格,跨幣別不換算 → 同幣比較較準)
+  - `renderD`(資訊密集型):small italic one_liner + 8 行統計(原 overview 6 行 + 課程數 + 住宿類型)+ 所有 chips 拼成一塊
+- Dispatcher:`if style === 'B' renderB; if 'D' renderD; else renderA`
+- 只影響 Section 1 overview,其餘 9 個 section 不變
 
 ---
 
@@ -352,3 +355,4 @@ RWD:
 | 2026-05-26 | 初版建立(Phase 5 完成後) |
 | 2026-06-12 | 加 Phase 18b 段(EF 切 nationality_breakdown + DROP top_nationalities,14c 過渡期凍結耦合說明) |
 | 2026-06-15 | Phase 18b sub-track 1 落地(EF v26 切讀 + DROP COLUMN);sub-track 2 LP A/B/D 樣式分派獨立列為 🔜 |
+| 2026-06-15 | Phase 18b sub-track 2 落地(EF v27 + Section 1 三種 overview render variants) |
