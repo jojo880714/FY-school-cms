@@ -1,0 +1,6 @@
+school_name,city,metro_station,walk_minutes,highlight
+ALPHA,Toronto,Yonge,3,市中心金融區步行可達多倫多大學
+ALPHA,Vancouver,Burrard,5,緊鄰加拿大廣場
+BRAVO,London,Covent Garden,4,倫敦西區劇院文化區
+ILAC,Toronto,Yonge,3,範例列(應跳過)
+__SAMPLE__ row,Toronto,,,sample

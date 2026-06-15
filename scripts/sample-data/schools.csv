@@ -1,0 +1,5 @@
+name,full_name,country,founded,english_only_policy,accreditation,nationality_count,notes,class_size_typical,class_size_max,strengths,suitable_for,one_liner,english_only_policy_label,min_age,nationality_breakdown,persona_match
+ALPHA,Alpha Language Centre,Canada,1995,TRUE,"Languages Canada, ACCET",75,測試學校 A,12,16,"商英最強, 升學銜接強","想升學, 想短期體驗",測試用商英大校,違規警告制,18,"[{""flag"":""🇪🇸"",""name"":""西班牙"",""pct"":24},{""flag"":""🇧🇷"",""name"":""巴西"",""pct"":18},{""flag"":""🇯🇵"",""name"":""日本"",""pct"":11}]","exam_prep, pathway_uni"
+BRAVO,Bravo English School,UK,2001,FALSE,"British Council, English UK",60,測試學校 B,10,14,"國籍均衡, 老師資深","想穩紮穩打學英文",測試用 UK 老牌,寬鬆制,16,"[{""flag"":""🇯🇵"",""name"":""日本"",""pct"":15},{""flag"":""🇰🇷"",""name"":""韓國"",""pct"":12},{""flag"":""🇮🇹"",""name"":""義大利"",""pct"":10}]","career_change, gap_year"
+ILAC,International Language Academy of Canada,Canada,1997,TRUE,Languages Canada,80,範例列(應由 TEMPLATE_EXAMPLE_NAMES 跳過),13,18,商英最強,想升學,範例列,警告制,18,"[{""flag"":""🇪🇸"",""name"":""Spain"",""pct"":20}]",exam_prep
+__SAMPLE__ CHARLIE,Sample Row,Canada,2000,TRUE,Test,50,範例列(應由 __SAMPLE__ marker 跳過),10,15,sample,sample,sample,sample,18,[],

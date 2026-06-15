@@ -1,0 +1,5 @@
+school_name,name,lessons_per_week,lesson_minutes,hours_per_week,schedule,entry_level,outcome_level,min_weeks
+ALPHA,Intensive English,30,50,25,週一至五 9:00-15:30,Beginner (A1),B2 / IELTS 6.0,4
+ALPHA,IELTS Preparation,32,50,26,週一至五 9:00-16:00,Upper-Intermediate (B2),IELTS 6.5+,4
+BRAVO,General English,20,50,15,週一至五 9:00-13:00,Beginner (A1),A2,2
+ILAC,General English,30,50,25,sample,sample,sample,4

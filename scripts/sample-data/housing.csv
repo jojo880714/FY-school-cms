@@ -1,0 +1,5 @@
+school_name,city,type,subtype,price_per_week,currency,includes,commute_to_school
+ALPHA,Toronto,Homestay,Single Room + Half Board,270,CAD,半膳(早晚餐),通勤 30 分鐘
+ALPHA,Vancouver,Residence,Standard Single,320,CAD,自理,步行 5 分鐘
+BRAVO,London,Homestay,Single + Half Board,250,GBP,半膳,通勤 40 分鐘
+ILAC,Toronto,Homestay,sample,270,CAD,sample,sample

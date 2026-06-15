@@ -1,0 +1,5 @@
+city,country,climate,population,cost_of_living_monthly,cost_of_living_currency,highlights,visa_options
+Toronto,Canada,四季分明 冬季嚴寒,280萬,1500,CAD,"金融中心, 多元文化, 大湖區","eTA, 學簽, 工簽"
+Vancouver,Canada,溫和多雨,67萬,1700,CAD,"山海景, 亞洲文化濃","eTA, 學簽"
+London,UK,冬季陰雨,900萬,1800,GBP,"國際都會, 文化遺產","Standard Visitor, Student visa"
+__SAMPLE__ Sample City,Canada,Sample climate,1萬,1000,CAD,sample,sample

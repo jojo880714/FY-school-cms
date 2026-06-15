@@ -1,0 +1,9 @@
+school_name,program_name,city,weeks_min,weeks_max,price_per_week,currency,note
+ALPHA,Intensive English,,1,11,380,CAD,所有校區同價
+ALPHA,Intensive English,,12,23,360,CAD,
+ALPHA,Intensive English,,24,,340,CAD,長期優惠
+ALPHA,IELTS Preparation,Toronto,1,11,400,CAD,只在 Toronto 校區
+ALPHA,IELTS Preparation,Toronto,12,23,380,CAD,
+BRAVO,General English,,1,11,280,GBP,
+BRAVO,General English,,12,,260,GBP,
+ILAC,Intensive English,,1,11,380,CAD,範例列
