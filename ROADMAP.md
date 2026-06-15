@@ -264,9 +264,19 @@ RWD:
 
 ---
 
-## Phase 18b — Edge Function 國籍卡切 nationality_breakdown + 廢 top_nationalities [P2] 🔜
+## Phase 18b sub-track 1 — Edge Function 國籍卡切 nationality_breakdown + 廢 top_nationalities [P2] ✅
 
-> Schema 重疊清理 + LP 卡片樣式分派(A/B/D)合併執行。本節為 schema 部分,LP 樣式另記。
+> Schema 重疊清理。LP A/B/D 卡片樣式分派列為 sub-track 2(下方,🔜)。
+
+**結果**(2026-06-15):**已落地**
+- EF Section 10 改讀 `nationality_breakdown`,新增 pct 文字 + 條狀視覺
+- `ALTER TABLE schools DROP COLUMN top_nationalities` migration 套用
+- IMPORT_TEMPLATES.md 移除 deprecated 條目
+- `scripts/import-data.js` 移除雙寫衍生邏輯
+
+---
+
+## Phase 18b sub-track 1 原始規劃(歷史備忘)
 
 **背景**:Phase 16a 加的 `schools.top_nationalities`(無 pct)與 Phase 18a 加的 `schools.nationality_breakdown`(含 pct)資料重疊。當前 EF Section 10 仍只讀 `top_nationalities`,`nationality_breakdown` 寫進去但沒被渲染。
 
@@ -289,10 +299,23 @@ RWD:
 **為什麼 backfill 不是 blocker**:14c 排在 18b 前,匯入 SOP 已要求雙寫 + pct 必填,到 18b 時 demo 那批無 pct 的 `top_nationalities` 已被真實資料整批取代。
 
 **驗收條件**
-- [ ] EF 切讀 `nationality_breakdown`,Section 10 國籍卡顯示 pct
-- [ ] `schools.top_nationalities` 已 DROP(`\d schools` 不見此欄)
-- [ ] IMPORT_TEMPLATES.md 不再提及 `top_nationalities`
+- [x] EF 切讀 `nationality_breakdown`,Section 10 國籍卡顯示 pct
+- [x] `schools.top_nationalities` 已 DROP(`\d schools` 不見此欄)
+- [x] IMPORT_TEMPLATES.md 不再提及 `top_nationalities`(只剩取代註記)
 - [ ] 14c 匯入的所有學校 row 之 `nationality_breakdown` 有 ≥1 筆且每筆都有 pct
+  *(14c 真實匯入待顧問交資料,暫無法驗收)*
+
+---
+
+## Phase 18b sub-track 2 — LP A/B/D 卡片樣式分派 [P2] 🔜
+
+> EF 已解凍,接下來 redeploy 成本不高 — 但需要先設計三種版型才能動。
+
+**現況**:
+- CreatePage 已送 `style: 'A' | 'B' | 'D'` 給 EF,EF 還沒讀
+- 「A 決策 / B 費用 / D 資訊密集」目前只有命名,沒有 HTML / 欄位對應
+
+**啟動前需要**:三種樣式各自的欄位清單與版型 mockup(或文字描述也行)
 
 ---
 
@@ -328,3 +351,4 @@ RWD:
 |---|---|
 | 2026-05-26 | 初版建立(Phase 5 完成後) |
 | 2026-06-12 | 加 Phase 18b 段(EF 切 nationality_breakdown + DROP top_nationalities,14c 過渡期凍結耦合說明) |
+| 2026-06-15 | Phase 18b sub-track 1 落地(EF v26 切讀 + DROP COLUMN);sub-track 2 LP A/B/D 樣式分派獨立列為 🔜 |

@@ -17,8 +17,8 @@
  *   - tuition_tiers                  : (school_name, program_name) → program_id
  *                                     (school_name, city) → campus_id (可選)
  *
- * 國籍欄位雙寫:nationality_breakdown(含 pct,必填) + top_nationalities(從前者衍生)。
- * Phase 18b 切斷 top_nationalities,在那之前都要雙寫,否則 EF Section 10 國籍卡空白。
+ * 國籍欄位:nationality_breakdown(含 pct,必填)— Section 10 國籍卡唯一資料源。
+ * Phase 18b 已 DROP schools.top_nationalities,不再雙寫。
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -144,11 +144,6 @@ function csvJsonArr(s) {
   }
 }
 
-// 從 nationality_breakdown(含 pct)衍生 top_nationalities(只 flag + name)
-function deriveTopNats(breakdown) {
-  return Array.isArray(breakdown) ? breakdown.map(({ flag, name }) => ({ flag, name })) : [];
-}
-
 function normalizeCurrency(code, ctx) {
   if (!code) return null;
   const c = String(code).trim().toUpperCase();
@@ -213,8 +208,7 @@ function parseSchools(rows) {
       one_liner: r.one_liner || null,
       english_only_policy_label: r.english_only_policy_label || null,
       min_age: csvInt(r.min_age),
-      top_nationalities: deriveTopNats(breakdown), // 雙寫:衍生
-      nationality_breakdown: breakdown,
+      nationality_breakdown: breakdown, // Phase 18b: 唯一國籍欄位(top_nationalities 已 DROP)
       persona_match: persona,
     });
   });

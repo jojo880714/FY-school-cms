@@ -58,8 +58,7 @@
 | `one_liner` | TEXT |  | `年輕活潑氛圍的多倫多商英大校` | TLDR 一句話定位(<40 字),Section 2 用(Phase 16a 新增) |
 | `english_only_policy_label` | TEXT |  | `違規警告制` | 顧問用語化的英語政策描述(<12 字),Section 3 用(Phase 16a 新增) |
 | `min_age` | INT |  | `18` | 最低收生年齡(NULL = 無限制 / 待補),未來給「依學生年齡過濾」UI 用(Phase 16a 新增) |
-| `top_nationalities` | JSONB |  | `[{"name":"Spain","flag":"🇪🇸"},{"name":"Brazil","flag":"🇧🇷"}]` | ⚠️ **DEPRECATED — Phase 18b 移除**。Phase 14c~18b 過渡期:Edge Function Section 10 仍讀此欄位,所以**匯入時與 `nationality_breakdown` 雙寫同一份學校的國籍清單**,否則 Section 10 國籍卡會空白。18b 切到 `nationality_breakdown` 後同步 DROP COLUMN。 |
-| `nationality_breakdown` | JSONB | ✅ | `[{"flag":"🇪🇸","name":"西班牙","pct":24},{"flag":"🇧🇷","name":"巴西","pct":18}]` | 前 5-7 個主要學生國籍 **含百分比**。每筆物件含 `flag` / `name` / `pct` 三欄,**`pct` 必填**(數字,顧問據實估算,總和不需精確 100)。Phase 18b 起為 Section 10 國籍卡唯一資料源。建議每年更新一次(Phase 18a 新增)。 |
+| `nationality_breakdown` | JSONB | ✅ | `[{"flag":"🇪🇸","name":"西班牙","pct":24},{"flag":"🇧🇷","name":"巴西","pct":18}]` | 前 5-7 個主要學生國籍 **含百分比**。每筆物件含 `flag` / `name` / `pct` 三欄,**`pct` 必填**(數字,顧問據實估算,總和不需精確 100)。Section 10 國籍卡的唯一資料源 — Edge Function 渲染時會顯示 flag、name、pct 文字 + pct 條狀圖。建議每年更新一次(Phase 18a 新增,Phase 18b 起取代已廢棄的 `top_nationalities`)。 |
 | `persona_match` | 陣列 |  | `exam_prep, pathway_grad, career_change` | 適合的學員人物 tag,**用半形逗號分隔**,從 master list 挑選(Phase 16c 新增):<br>• `exam_prep`(考試衝刺)<br>• `pathway_uni`(銜接升大學)<br>• `pathway_grad`(銜接升研究所)<br>• `working_holiday`(打工度假/WHV 配套)<br>• `career_change`(職涯轉換,鎖定 30+)<br>• `gap_year`(學測後 Gap year)<br>Section 4「人物 × 校」矩陣用 |
 
 **範例 rows:**

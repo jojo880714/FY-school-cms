@@ -336,20 +336,32 @@ serve(async (req: Request) => {
       </div>`;
     }).join("\n");
 
-    // Nationality cards — top_nationalities + 警語
+    // Nationality cards — Phase 18b: 改讀 nationality_breakdown(含 pct)+ 條狀視覺
     const nationalityCards = schools.map((item: any) => {
       const s = item.school;
-      const tops = Array.isArray(s.top_nationalities) ? s.top_nationalities : [];
+      const breakdown = Array.isArray(s.nationality_breakdown) ? s.nationality_breakdown : [];
       const totalText = s.nationality_count ? `學員來自 ${s.nationality_count}+ 國` : "";
-      const list = tops.length > 0
-        ? `<ol style="padding-left:20px;font-size:13px;line-height:1.9;margin:0">${tops.map((n: any) => {
-            const label = typeof n === "string" ? n : (n.name || n.country || "—");
-            const flag = (typeof n === "object" && n && n.flag) ? n.flag + " " : "";
-            return `<li>${flag}${label}</li>`;
-          }).join("")}</ol>`
+      const list = breakdown.length > 0
+        ? `<ul style="list-style:none;padding:0;margin:0;font-size:13px;line-height:1.5">${breakdown.map((n: any) => {
+            const flag = n && n.flag ? n.flag + " " : "";
+            const name = (n && n.name) || "—";
+            const pct = (n && typeof n.pct === "number" && Number.isFinite(n.pct)) ? n.pct : null;
+            const pctText = pct !== null ? `${pct}%` : "";
+            const barWidth = pct !== null ? Math.min(100, Math.max(0, pct)) : 0;
+            const bar = pct !== null
+              ? `<div style="height:4px;background:#F0E9DD;border-radius:2px;overflow:hidden;margin-top:3px"><div style="width:${barWidth}%;height:100%;background:var(--color-primary)"></div></div>`
+              : "";
+            return `<li style="margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                <span>${flag}${name}</span>
+                <span style="font-variant-numeric:tabular-nums;color:var(--color-text-muted);font-size:12px">${pctText}</span>
+              </div>
+              ${bar}
+            </li>`;
+          }).join("")}</ul>`
         : `<p style="font-size:13px;color:var(--color-text-muted);margin:0">請洽顧問取得當期數據</p>`;
-      const footer = tops.length > 0
-        ? `<p style="font-size:11px;color:var(--color-text-muted);margin-top:10px">順序為常見度,實際依當期而定</p>`
+      const footer = breakdown.length > 0
+        ? `<p style="font-size:11px;color:var(--color-text-muted);margin-top:10px">百分比為顧問估算,實際依當期而定</p>`
         : "";
       return `
       <div class="school-card">

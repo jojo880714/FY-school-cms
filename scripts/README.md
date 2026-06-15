@@ -75,15 +75,13 @@ programs.csv       tuition_tiers.csv  housing.csv
 
 ---
 
-## 國籍欄位雙寫
+## 國籍欄位
 
-`schools` 表同時寫:
-- **`nationality_breakdown`**(必填):顧問填的 JSON 陣列,每筆 `{flag, name, pct}`,`pct` 必填數字
-- **`top_nationalities`**(腳本衍生):從 `nationality_breakdown` 自動產出,只留 `{flag, name}`
+`schools.nationality_breakdown`(必填):顧問填的 JSON 陣列,每筆 `{flag, name, pct}`,`pct` 必填數字。
 
-**為什麼雙寫**:Edge Function Section 10 國籍卡目前讀 `top_nationalities`(凍結中),Phase 18b 才會切到 `nationality_breakdown` + 同步 `DROP COLUMN top_nationalities`。在那之前不雙寫,Section 10 會空白。
+> **Phase 18b 更新**:`top_nationalities` 已 DROP,本腳本不再雙寫。Edge Function Section 10 國籍卡直接讀 `nationality_breakdown`,顯示 flag + name + pct + 條狀圖。
 
-`nationality_breakdown` CSV 寫法(JSON 字串):
+CSV 寫法(JSON 字串):
 
 ```csv
 nationality_breakdown
@@ -173,26 +171,25 @@ WHERE t.campus_id IS NOT NULL AND c.id IS NULL;
 -- 預期:0
 ```
 
-### 3. 國籍欄位雙寫一致性
+### 3. 國籍欄位完整性
 
 ```sql
--- 雙寫應該每筆 schools 都有 nationality_breakdown(必填)和對應的 top_nationalities
+-- 每筆 schools 都有 nationality_breakdown(必填)
 SELECT
-  COUNT(*) FILTER (WHERE jsonb_array_length(nationality_breakdown) = 0) AS empty_breakdown,
-  COUNT(*) FILTER (WHERE jsonb_array_length(top_nationalities) = 0) AS empty_top,
-  COUNT(*) FILTER (
-    WHERE jsonb_array_length(nationality_breakdown) <> jsonb_array_length(top_nationalities)
-  ) AS length_mismatch
+  COUNT(*) FILTER (WHERE nationality_breakdown IS NULL
+                      OR jsonb_array_length(nationality_breakdown) = 0) AS empty_breakdown
 FROM schools;
--- 預期(成功匯入後):empty_breakdown = 0 / empty_top = 0 / length_mismatch = 0
+-- 預期:0
 ```
 
 ```sql
--- 每筆 nationality_breakdown 條目都有 pct
+-- 每筆 nationality_breakdown 條目都有 pct(數字)
 SELECT s.name, item
 FROM schools s,
      jsonb_array_elements(s.nationality_breakdown) item
-WHERE NOT (item ? 'pct') OR (item->>'pct') IS NULL;
+WHERE NOT (item ? 'pct')
+   OR (item->>'pct') IS NULL
+   OR jsonb_typeof(item->'pct') <> 'number';
 -- 預期:0 列
 ```
 
@@ -235,15 +232,16 @@ FROM programs;
 
 ## 不在本腳本範圍的事
 
-- `city_info.cost_of_living_monthly_cad` 改名 / 廢棄 → Phase 14c 後續,**且牽涉凍結中的 Edge Function**,需另外決策
-- Edge Function 切讀 `nationality_breakdown` + `DROP COLUMN top_nationalities` → Phase 18b
-- LP A/B/D 樣式分派 → Phase 18b
+- `city_info.cost_of_living_monthly_cad` 改名 / 廢棄 → Phase 14c 後續,需另外決策
+- LP A/B/D 樣式分派 → Phase 18b 後續(sub-track 2,需先設計三種版型)
 - 對正式 DB 跑 `--commit`(等顧問真實資料到位才執行)
-
----
 
 ## 修訂歷史
 
 | 日期 | 變更 |
 |---|---|
-| 2026-06-15 | Phase 14c 初版 — 腳本就緒,樣本資料驗 pipeline OK,未對正式 DB 匯入 |
+| 2026-06-15 | Phase 14c 初版 — 腳本就緒 |
+| 2026-06-15 | Phase 18b sub-track 1 — 移除 `top_nationalities` 雙寫(該欄位已 DROP) |
+
+---
+
