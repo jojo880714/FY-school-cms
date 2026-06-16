@@ -322,18 +322,16 @@ RWD:
 
 ---
 
-## Phase 18b backlog — EF labels 補齊 + 容錯 [P2] 🔜
+## Phase 18b backlog — EF labels 補齊 + 容錯 + _cad DROP [P2] ✅
 
-> 不單獨 redeploy,併入下次 EF 改動一次處理。
+> 三件事一刀做完(EF v28)。原 backlog 兩條 + 順手把 `cost_of_living_monthly_cad` 也 DROP(EF 已不讀)。
 
-**待辦**:
-1. `supabase/functions/generate-page/index.ts` `personaLabels` 加 `pr_immigration: '移民/PR 規劃'`(對應 IMPORT_TEMPLATES master list 6→7 那條 caveat)
-2. **`personaLabels` lookup 加 fallback** — `labels[p] ?? p` 已有(line ~135 / 145 / 174 / 220 都用 `personaLabels[p] || p`),但要確認所有 render path 都這樣。若顧問在 EF labels 更新前就標了 master-list 外的 tag,公開頁應該顯示原始 key(例如 `pr_immigration`)而不是空白或 `undefined`,**不爆版**。
-3. EF redeploy(本批合併處理時一次 deploy 新版本)
-
-**驗收**:
-- [ ] `pr_immigration` 在 Section 1 renderA persona chips、Section 1 renderD chips、Section 4「人物 × 校」(若有)都顯示「移民/PR 規劃」中文
-- [ ] 標一個 master-list 外的測試 tag(例如 `foo_bar`)→ 公開頁顯示 `foo_bar` 字串,不是空格、不是 `undefined`、不爆版
+**結果**(2026-06-16):**已落地**(EF v28 + migration `20260616145919`)
+- `personaLabels` 加 `pr_immigration: '移民/PR 規劃'`(對齊 master list 7 個有效 tag)
+- 加註解標明 `personaLabels[p] || p` fallback 是 intentional:未來新 tag 還沒寫進 labels、或顧問誤填 master 外 tag,顯示原始 key 不爆版
+- Section 8 City Cards 從 `cost_of_living_monthly_cad` 切到 `cost_of_living_monthly` + `cost_of_living_currency`,顯示「生活費 ${currency}$${value}/月」(currency 未填預設 CAD)
+- `ALTER TABLE city_info DROP COLUMN cost_of_living_monthly_cad`(套用前 sanity:3 row / 0 orphan,資料 Phase 14a 已 backfill 完整)
+- `scripts/import-from-sheets.js` 移除 `_cad` mirror;`scripts/validate-import.sql` 4b/4c 改為「確認 _cad 已 DROP」
 
 ---
 
@@ -373,3 +371,4 @@ RWD:
 | 2026-06-15 | Phase 18b sub-track 2 落地(EF v27 + Section 1 三種 overview render variants) |
 | 2026-06-15 | Persona vocabulary 對齊第一批:master list 6→7(加 `pr_immigration`);4 個 UI-only passthrough(`lang_school` / `short_tour` / `custom_tour` / `undecided`);CreatePage `getPersonaMatchScore` 加 passthrough 濾除。EF `personaLabels` 加 `pr_immigration` 中文 label + redeploy 排 18b backlog。 |
 | 2026-06-15 | 開 Phase 18b backlog 段:`personaLabels` 加 `pr_immigration` + 確保所有 render path 對 master-list 外 tag 都有 fallback(不爆版),併入下次 EF 改動一次 redeploy。 |
+| 2026-06-16 | Phase 18b backlog 全部落地(EF v28):`personaLabels` 加 `pr_immigration`;Section 8 City Cards 切 `cost_of_living_monthly` + currency;`cost_of_living_monthly_cad` 已 DROP;`scripts/import-from-sheets.js` / `validate-import.sql` 同步清理。 |

@@ -82,20 +82,10 @@ SELECT
   COUNT(*) AS total_cities
 FROM city_info;
 
--- 4b. CAD 城市的 _cad mirror 是否寫進去(讓現役 EF City Cards 仍能顯示)
-SELECT
-  COUNT(*) FILTER (WHERE cost_of_living_currency = 'CAD' AND cost_of_living_monthly_cad IS NOT NULL) AS cad_mirrored,
-  COUNT(*) FILTER (WHERE cost_of_living_currency = 'CAD' AND cost_of_living_monthly_cad IS NULL) AS cad_unmirrored,
-  COUNT(*) FILTER (WHERE cost_of_living_currency = 'CAD') AS cad_total
-FROM city_info;
--- 預期:cad_mirrored = cad_total / cad_unmirrored = 0
-
--- 4c. 非 CAD 城市的 _cad 應該是 null(避免雜訊死資料)
-SELECT city, cost_of_living_currency, cost_of_living_monthly_cad
-FROM city_info
-WHERE cost_of_living_currency <> 'CAD'
-  AND cost_of_living_monthly_cad IS NOT NULL;
--- 預期:0 列
+-- 4b. 確認 _cad 舊欄已 DROP(Phase 18b backlog)
+SELECT column_name FROM information_schema.columns
+WHERE table_name='city_info' AND column_name='cost_of_living_monthly_cad';
+-- 預期: 0 列
 
 -- ──────────────────────────────────────────────────────────────────────
 -- 5. 幣別都是 ISO code(tuition_tiers / housing)

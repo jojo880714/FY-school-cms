@@ -132,9 +132,13 @@ serve(async (req: Request) => {
       return t + h;
     });
     const maxTotal = Math.max(1, ...totalsForBar);
+    // Persona vocabulary master list — 對齊 IMPORT_TEMPLATES.md(7 個有效計分 tag)
+    // Render 用 `personaLabels[p] || p` 取值:lookup 失敗 fallback 顯示原始 key
+    // (例如新加 tag 還沒寫進 labels、或顧問誤填 master 外 tag),不會 undefined / 空白爆版
     const personaLabels: Record<string, string> = {
       exam_prep: '考試衝刺', pathway_uni: '銜接升大學', pathway_grad: '銜接升研究所',
       working_holiday: '打工度假', career_change: '職涯轉換', gap_year: '學測後 Gap year',
+      pr_immigration: '移民/PR 規劃',
     };
 
     function renderA(item: any): string {
@@ -326,7 +330,7 @@ serve(async (req: Request) => {
         <div class="city-tags">
           ${ci.climate ? `<span class="city-tag">${ci.climate}</span>` : ""}
           ${ci.population ? `<span class="city-tag">人口 ${ci.population}</span>` : ""}
-          ${ci.cost_of_living_monthly_cad ? `<span class="city-tag">生活費 CAD$${ci.cost_of_living_monthly_cad}/月</span>` : ""}
+          ${ci.cost_of_living_monthly ? `<span class="city-tag">生活費 ${ci.cost_of_living_currency || 'CAD'}$${ci.cost_of_living_monthly}/月</span>` : ""}
         </div>
         <p style="font-size:13px;color:#6b7280">${(ci.highlights || []).join("・") || ""}</p>
         ` : "<p style='font-size:13px;color:#9ca3af'>城市資訊待補充</p>"}

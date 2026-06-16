@@ -106,7 +106,7 @@ schools → city_info → campuses → programs → tuition_tiers → housing
 ### 已知的設計選擇
 
 - **國籍欄位單寫**:只讀 sheet 的 `nationality_breakdown` 寫進 DB。sheet 若還有 `top_nationalities` 欄(18b 之前殘留)**完全 ignore** — DB 該欄已在 Phase 18b sub-track 1 DROP(commit `cfcf493`)。
-- **CAD 城市 mirror `_cad`**:現役 EF City Cards 仍讀 `city_info.cost_of_living_monthly_cad`,所以 CAD 城市的 `cost_of_living_monthly` 順手 mirror 到 `_cad` 欄,避免 City Cards 顯示空白。非 CAD 城市 `_cad` 留 null(等 EF 切換到新欄,排在 18b backlog)。
+- **生活費寫新欄不 mirror**:寫 `cost_of_living_monthly` + `cost_of_living_currency`。舊欄 `cost_of_living_monthly_cad` 已 Phase 18b backlog DROP(EF v28 已切到新欄),不再需要 mirror。
 - **`tuition_tiers.campus_id` 缺 city**:DB 該欄 nullable → 設 null + WARN(非 blocking),語意是「課程跨校區同價」。
 - **`housing.city` 缺**:DB NOT NULL → blocking error(報出來,等顧問補 city)。
 - **integer 欄位 round + warn**:`cost_of_living_monthly` / `founded` / `nationality_count` / `class_size_*` 等 integer 欄若 sheet 出現非整數值,自動 round 並 WARN(避免靜默截斷)。
@@ -170,12 +170,9 @@ CSV 寫法見 [IMPORT_TEMPLATES.md](../IMPORT_TEMPLATES.md)。`sample-data/` 內
 
 ---
 
-## 不在本腳本範圍的事(18b backlog)
+## 不在本腳本範圍的事
 
-- EF `personaLabels` 加 `pr_immigration` 中文 label
-- EF 切讀 `city_info.cost_of_living_monthly`(取代舊 `_cad` 欄)
-- 對所有 `personaLabels[p] ?? p` render path 加 fallback(master 外 tag 顯示原始 key)
-- EF redeploy(以上三個併入下次 EF 改動一次處理,不單獨 v28)
+(Phase 18b backlog 全部落地於 2026-06-16 commit chain,EF v28)
 
 ---
 

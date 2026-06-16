@@ -28,8 +28,8 @@
  * sheet 上若還有 top_nationalities 欄位是 18b 之前的歷史殘留,腳本完全 ignore
  * (DB 該欄已 Phase 18b sub-track 1 DROP)。
  *
- * cost_of_living mirror:CAD 城市的 cost_of_living_monthly 順手 mirror 到
- * cost_of_living_monthly_cad,讓現役 EF(仍讀舊欄)繼續顯示 City Cards 生活費。
+ * cost_of_living:寫 cost_of_living_monthly + cost_of_living_currency(Phase 14a 加的新欄)。
+ * 舊欄 cost_of_living_monthly_cad 已 Phase 18b 後續 DROP,不再 mirror。
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -291,9 +291,6 @@ function parseCityInfo(rows) {
 
     const monthlyInt = csvInt(r.cost_of_living_monthly, 'city_info', row, 'cost_of_living_monthly');
 
-    // CAD mirror:現役 EF 仍讀 cost_of_living_monthly_cad,寫進去讓 City Cards 不空
-    const monthlyCadMirror = currency === 'CAD' ? monthlyInt : null;
-
     out.push({
       city: r.city,
       country: r.country,
@@ -301,7 +298,6 @@ function parseCityInfo(rows) {
       population: r.population || null,
       cost_of_living_monthly: monthlyInt,
       cost_of_living_currency: currency,
-      cost_of_living_monthly_cad: monthlyCadMirror,
       highlights: csvArr(r.highlights),
       visa_options: csvArr(r.visa_options),
     });

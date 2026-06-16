@@ -1,0 +1,32 @@
+-- Phase 18b backlog 第 3 件:廢棄 city_info.cost_of_living_monthly_cad
+-- 收尾舊欄(CAD-only),完全切到 Phase 14a 加的通用欄:
+--   cost_of_living_monthly (integer) + cost_of_living_currency (text)
+--
+-- 背景:
+-- - Phase 14a (20260601123751) 已:
+--     1. ADD COLUMN cost_of_living_monthly INTEGER
+--     2. ADD COLUMN cost_of_living_currency TEXT DEFAULT 'CAD'
+--     3. backfill:UPDATE SET cost_of_living_monthly = cost_of_living_monthly_cad,
+--                            cost_of_living_currency = 'CAD'
+--                  WHERE cost_of_living_monthly IS NULL AND _cad IS NOT NULL
+-- - 18b 套用前 sanity 確認(2026-06-16):
+--     city_info 3 列、_cad 3 列有值、新欄 3 列有值、orphan(_cad 有值但新欄沒值)= 0
+--     → backfill 完整,DROP 不損失資料
+--
+-- 配套(同 PR):
+-- - supabase/functions/generate-page/index.ts Section 8 City Cards:
+--     讀 cost_of_living_monthly + cost_of_living_currency,顯示
+--     「生活費 ${currency}$${value}/月」(currency 未填預設 CAD)
+-- - scripts/import-from-sheets.js:移除 _cad mirror(該欄已不存在)
+-- - scripts/validate-import.sql:移除 CAD mirror 檢查(無 _cad 可比)
+--
+-- 順序(依 OPERATIONS.md「先 deploy EF → 再改 schema」):
+--   1. EF v28 deploy(新版讀新欄,不再讀 _cad)
+--   2. 套用本 migration(DROP COLUMN)— v25..v27 都不在了,沒人讀
+
+ALTER TABLE city_info DROP COLUMN IF EXISTS cost_of_living_monthly_cad;
+
+-- 驗證 SQL(套用完跑一次):
+-- SELECT column_name FROM information_schema.columns
+-- WHERE table_name = 'city_info' AND column_name = 'cost_of_living_monthly_cad';
+-- 預期: 0 列
