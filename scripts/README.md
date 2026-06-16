@@ -1,8 +1,13 @@
 # scripts/ — Phase 14c 語校資料匯入
 
-Node.js 腳本,把顧問填好的 6 張 CSV 一次匯入 Supabase。
+兩種匯入 pipeline,共用驗證 SQL:
 
-> 本腳本是 Phase 14c 的「腳本就緒」階段產出 — 已用樣本資料驗證 pipeline,**但還沒對正式 DB 匯入過任何真實資料**。等顧問填完 6 張 Sheets / CSV 才會跑 `--commit`。
+| 腳本 | 來源 | 狀態 |
+|---|---|:---:|
+| **`import-from-sheets.js`** | 直連 Google Sheets API | ⭐ 主路徑 |
+| `import-data.js` | 6 個 CSV 檔案 | 備援 / 離線測試用 |
+
+兩支都跑同一份目標 schema、同樣的 FK 解析邏輯、同樣的驗證 SQL。差別只在資料從哪讀。
 
 ---
 
@@ -10,9 +15,11 @@ Node.js 腳本,把顧問填好的 6 張 CSV 一次匯入 Supabase。
 
 ```
 scripts/
-├── import-data.js          匯入主腳本(本檔)
-├── README.md               本文件
-└── sample-data/            自我測試樣本(2 所虛擬學校 + 範例列跳過測試)
+├── import-from-sheets.js    Sheets 直連匯入主腳本(Phase 14c primary)
+├── import-data.js           CSV 匯入腳本(備援)
+├── validate-import.sql      匯入後驗證 SQL(read-only,共用)
+├── README.md                本文件
+└── sample-data/             CSV 備援腳本的測試樣本
     ├── schools.csv
     ├── city_info.csv
     ├── campuses.csv
@@ -23,225 +30,159 @@ scripts/
 
 ---
 
-## 用法
+## ⭐ 主路徑:Sheets 直連(`import-from-sheets.js`)
+
+### 用法
 
 ```bash
-# 1. dry-run(預設,不寫 DB)— 用內建樣本資料驗證 pipeline
-node scripts/import-data.js
+# 1. dry-run(預設,只驗證 + 印筆數,不寫 DB)
+node scripts/import-from-sheets.js
 
-# 2. dry-run 指定資料夾
-node scripts/import-data.js --data-dir path/to/real-csvs
+# 2. 真實匯入(DB 預設要是空的,有資料會 abort)
+node scripts/import-from-sheets.js --commit
 
-# 3. 真實匯入(需 SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)
-node scripts/import-data.js --data-dir path/to/real-csvs --commit
+# 3. 重灌(先 DELETE 6 個 table 再寫)— 破壞性,先確認再跑
+node scripts/import-from-sheets.js --commit --truncate
 
-# 4. 不跳範例列(偵錯用)
-node scripts/import-data.js --keep-samples
+# 4. 覆寫預設 spreadsheet ID
+node scripts/import-from-sheets.js --sheet-id <google_sheet_id>
 
 # 5. 印 stack trace
-node scripts/import-data.js --verbose
+node scripts/import-from-sheets.js --verbose
 ```
 
-**安全預設**:沒加 `--commit` 一律當 dry-run,只解析+驗證+印筆數,不碰 DB。
+**安全預設**:沒加 `--commit` 一律當 dry-run,只驗證不寫。
 
----
+### 認證設定(三選一,優先序由上而下)
 
-## CSV 擺放規則
+複製 `.env.example` 成 `.env.local` 並填入。下列三個任一即可:
 
-每張表一個檔,**檔名必須**是:
-
+**選項 1:service account 金鑰檔(推薦)**
+```bash
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 ```
-schools.csv        city_info.csv      campuses.csv
-programs.csv       tuition_tiers.csv  housing.csv
+1. Google Cloud Console → 建 service account → 下載 JSON 金鑰
+2. 把試算表「檢視」分享給 SA email(`xxx@PROJECT.iam.gserviceaccount.com`)
+3. JSON 檔放本機,路徑填上
+
+**選項 2:service account 金鑰內容(避免管檔)**
+```bash
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
 ```
+用 `jq -c . sa.json` 把整段 JSON 壓成一行。同樣需要「分享給 SA email」。
 
-第一列為 header,欄位名對齊 [IMPORT_TEMPLATES.md](../IMPORT_TEMPLATES.md)(下方有差異說明)。
-
----
-
-## IMPORT_TEMPLATES.md ↔ 真實 DB 的差異(腳本已處理)
-
-腳本實作時對照線上 schema,發現幾處 IMPORT_TEMPLATES.md 沒提但 DB 實際要求的欄位 — 腳本會明確驗證或 fallback:
-
-| 欄位 | IMPORT_TEMPLATES | 真實 DB | 腳本處理 |
-|---|---|---|---|
-| `schools.full_name` | 選填 | **NOT NULL** | CSV 留空 → fallback 用 `name` 補 |
-| `programs.lessons_per_week` | 沒提 | **NOT NULL** | CSV 必填,否則錯誤回報 |
-| `programs.lesson_minutes` | 沒提 | NOT NULL,default 50 | 接受空值,用 default 50 |
-| `programs.suitable_for` | 沒提 | TEXT(不是 ARRAY) | **目前未在 CSV 支援** — 與 `schools.suitable_for[]`(陣列)同名同欄位,需要才補 |
-| `housing.city` | 沒提 | **NOT NULL** | CSV 必填,否則錯誤 |
-| `tuition_tiers.min_weeks` / `max_weeks` | 用這名字 | DB 是 `weeks_min` / `weeks_max` | CSV 兩種名字都接受(`r.weeks_min ?? r.min_weeks`) |
-| `tuition_tiers.campus_id` | 沒提 | 有,nullable | CSV 加可選 `city` 欄 → 有就解 campus_id,無則 NULL(課程跨校區同價) |
-
----
-
-## 國籍欄位
-
-`schools.nationality_breakdown`(必填):顧問填的 JSON 陣列,每筆 `{flag, name, pct}`,`pct` 必填數字。
-
-> **Phase 18b 更新**:`top_nationalities` 已 DROP,本腳本不再雙寫。Edge Function Section 10 國籍卡直接讀 `nationality_breakdown`,顯示 flag + name + pct + 條狀圖。
-
-CSV 寫法(JSON 字串):
-
-```csv
-nationality_breakdown
-"[{""flag"":""🇪🇸"",""name"":""西班牙"",""pct"":24},{""flag"":""🇧🇷"",""name"":""巴西"",""pct"":18}]"
+**選項 3:API key(僅讀「知道連結即可檢視」的 sheet)**
+```bash
+GOOGLE_SHEETS_API_KEY=AIza...
 ```
+Google Cloud Console → API & Services → Credentials → Create API key
 
-Excel / Google Sheets 出 CSV 時雙引號會自動處理。**`pct` 必須是數字**(不是字串),否則腳本拒絕。
-
----
-
-## 範例列跳過機制
-
-腳本會跳過下列列(預設 ON,`--keep-samples` 關閉):
-
-1. **任一儲存格以 marker 開頭**:`__SAMPLE__`、`__EXAMPLE__`、`#`、`//`
-2. **主鍵欄是模板示範名**:`ILAC`、`Kaplan`、`EC`(來自 IMPORT_TEMPLATES.md 範例 rows)
-
-要保留示範資料當真實匯入(罕見情境):換掉 `name` / `school_name` 為其他值,或加 `--keep-samples`。
-
----
-
-## env 設定
-
-腳本會自動讀 `.env.local`、`.env`(`.gitignore` 保護中)。需要的變數:
+### Supabase 寫入認證
 
 ```bash
-# dry-run 只需名字存在即可(不會連線)
-# --commit 模式必須真實有效
-SUPABASE_URL=https://uxxpagylkdljjaxslmyj.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...     # ← 真實匯入用,有 RLS bypass
-# 或備援(實際匯入時可能被 RLS 擋,只當 fallback)
-SUPABASE_ANON_KEY=eyJ...
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...  # service_role,繞 RLS
+```
+`--commit` 才會用到。ANON key 會被 RLS 擋,**必須用 service_role**。
+來源:Supabase Studio → Project Settings → API → service_role secret。
+
+### 試算表結構約定
+
+**6 個 tab 名稱一字不差**(缺一或多出未知 tab 直接報錯停止):
+- `schools` / `city_info` / `campuses` / `programs` / `tuition_tiers` / `housing`
+
+每 tab 第 1 列為 header,**欄位以名稱對映**(欄序隨意,重排不會壞)。
+空 cell → null,逗號分隔陣列欄空 → null。
+
+### 寫入流程
+
+腳本依 FK 安全順序:
+```
+schools → city_info → campuses → programs → tuition_tiers → housing
 ```
 
-**RLS 警告**:schools / campuses / programs / tuition_tiers / housing / city_info 在線上是否開 RLS 影響寫入。若用 `anon` key 寫不進去,改用 `service_role` key。
+`--commit` 模式會先 SELECT 各表現有筆數;**任一非空 → 預設 abort**,避免重複插入。要重灌需顯式 `--truncate`(會 DELETE 全部 6 個 table)。
+
+### 已知的設計選擇
+
+- **國籍欄位單寫**:只讀 sheet 的 `nationality_breakdown` 寫進 DB。sheet 若還有 `top_nationalities` 欄(18b 之前殘留)**完全 ignore** — DB 該欄已在 Phase 18b sub-track 1 DROP(commit `cfcf493`)。
+- **CAD 城市 mirror `_cad`**:現役 EF City Cards 仍讀 `city_info.cost_of_living_monthly_cad`,所以 CAD 城市的 `cost_of_living_monthly` 順手 mirror 到 `_cad` 欄,避免 City Cards 顯示空白。非 CAD 城市 `_cad` 留 null(等 EF 切換到新欄,排在 18b backlog)。
+- **`tuition_tiers.campus_id` 缺 city**:DB 該欄 nullable → 設 null + WARN(非 blocking),語意是「課程跨校區同價」。
+- **`housing.city` 缺**:DB NOT NULL → blocking error(報出來,等顧問補 city)。
+- **integer 欄位 round + warn**:`cost_of_living_monthly` / `founded` / `nationality_count` / `class_size_*` 等 integer 欄若 sheet 出現非整數值,自動 round 並 WARN(避免靜默截斷)。
+
+### 顧問跑的順序
+
+1. 備認證(SA 金鑰 + sheet 分享 SA email,或設好 OAuth / API key)
+2. `node scripts/import-from-sheets.js`(dry-run)→ 看 error / warn,有的話**回去 sheet 補資料**
+3. dry-run 乾淨後加 `--commit`(若 DB 已有資料 → 加 `--truncate`)
+4. 到 [Supabase Studio SQL Editor](https://supabase.com/dashboard/project/uxxpagylkdljjaxslmyj/sql/new) 跑 `scripts/validate-import.sql` 驗證
 
 ---
 
-## 匯入後驗證 SQL
+## 備援路徑:CSV(`import-data.js`)
 
-`--commit` 跑完後,請到 [Supabase Studio SQL Editor](https://supabase.com/dashboard/project/uxxpagylkdljjaxslmyj/sql/new) 跑下列 read-only 驗證(預期值寫在註解):
+跟主路徑同邏輯,只是資料從 CSV 檔讀。離線測試 / sheet 故障時用。
 
-### 1. 各表筆數
+```bash
+# dry-run(用內建 sample-data/)
+node scripts/import-data.js
 
-```sql
-SELECT 'schools'       AS table, COUNT(*) AS rows FROM schools
-UNION ALL SELECT 'city_info',     COUNT(*) FROM city_info
-UNION ALL SELECT 'campuses',      COUNT(*) FROM campuses
-UNION ALL SELECT 'programs',      COUNT(*) FROM programs
-UNION ALL SELECT 'tuition_tiers', COUNT(*) FROM tuition_tiers
-UNION ALL SELECT 'housing',       COUNT(*) FROM housing
-ORDER BY 1;
--- 預期:對照腳本 stdout 印的摘要數字
+# dry-run 指定資料夾
+node scripts/import-data.js --data-dir path/to/real-csvs
+
+# 真實匯入
+node scripts/import-data.js --data-dir path/to/real-csvs --commit
+
+# 不跳範例列(偵錯)
+node scripts/import-data.js --keep-samples
 ```
 
-### 2. FK 孤兒檢查
-
-```sql
--- campuses 沒對到 schools
-SELECT 'campuses orphan' AS what, COUNT(*) AS n
-FROM campuses c LEFT JOIN schools s ON s.id = c.school_id
-WHERE c.school_id IS NOT NULL AND s.id IS NULL;
--- 預期:0
-
--- programs 沒對到 schools
-SELECT 'programs orphan', COUNT(*)
-FROM programs p LEFT JOIN schools s ON s.id = p.school_id
-WHERE p.school_id IS NOT NULL AND s.id IS NULL;
--- 預期:0
-
--- housing 沒對到 schools
-SELECT 'housing orphan', COUNT(*)
-FROM housing h LEFT JOIN schools s ON s.id = h.school_id
-WHERE h.school_id IS NOT NULL AND s.id IS NULL;
--- 預期:0
-
--- tuition_tiers 沒對到 programs
-SELECT 'tuition no program', COUNT(*)
-FROM tuition_tiers t LEFT JOIN programs p ON p.id = t.program_id
-WHERE t.program_id IS NOT NULL AND p.id IS NULL;
--- 預期:0
-
--- tuition_tiers 有 campus_id 但沒對到 campuses
-SELECT 'tuition no campus', COUNT(*)
-FROM tuition_tiers t LEFT JOIN campuses c ON c.id = t.campus_id
-WHERE t.campus_id IS NOT NULL AND c.id IS NULL;
--- 預期:0
-```
-
-### 3. 國籍欄位完整性
-
-```sql
--- 每筆 schools 都有 nationality_breakdown(必填)
-SELECT
-  COUNT(*) FILTER (WHERE nationality_breakdown IS NULL
-                      OR jsonb_array_length(nationality_breakdown) = 0) AS empty_breakdown
-FROM schools;
--- 預期:0
-```
-
-```sql
--- 每筆 nationality_breakdown 條目都有 pct(數字)
-SELECT s.name, item
-FROM schools s,
-     jsonb_array_elements(s.nationality_breakdown) item
-WHERE NOT (item ? 'pct')
-   OR (item->>'pct') IS NULL
-   OR jsonb_typeof(item->'pct') <> 'number';
--- 預期:0 列
-```
-
-### 4. 幣別都是 ISO code
-
-```sql
-SELECT DISTINCT currency, COUNT(*) AS n
-FROM tuition_tiers GROUP BY 1
-UNION ALL
-SELECT DISTINCT currency, COUNT(*)
-FROM housing GROUP BY 1
-ORDER BY 1;
--- 預期:只看到 CAD/USD/GBP/AUD/EUR/NZD/JPY/TWD 之類 3-letter code,無 $ / £ / 等符號
-```
-
-### 5. NOT NULL 完整性 spot check
-
-```sql
-SELECT
-  COUNT(*) FILTER (WHERE name IS NULL)              AS schools_no_name,
-  COUNT(*) FILTER (WHERE full_name IS NULL)         AS schools_no_full_name,
-  COUNT(*) FILTER (WHERE country IS NULL)           AS schools_no_country
-FROM schools;
--- 預期:全 0
-
-SELECT
-  COUNT(*) FILTER (WHERE city IS NULL)              AS housing_no_city,
-  COUNT(*) FILTER (WHERE type IS NULL)              AS housing_no_type,
-  COUNT(*) FILTER (WHERE price_per_week IS NULL)    AS housing_no_price
-FROM housing;
--- 預期:全 0
-
-SELECT
-  COUNT(*) FILTER (WHERE lessons_per_week IS NULL)  AS programs_no_lpw
-FROM programs;
--- 預期:0
-```
+CSV 寫法見 [IMPORT_TEMPLATES.md](../IMPORT_TEMPLATES.md)。`sample-data/` 內有 2 所虛構學校的範本可參考。
 
 ---
 
-## 不在本腳本範圍的事
+## IMPORT_TEMPLATES.md ↔ 真實 DB 的差異(兩支腳本都已處理)
 
-- `city_info.cost_of_living_monthly_cad` 改名 / 廢棄 → Phase 14c 後續,需另外決策
-- LP A/B/D 樣式分派 → Phase 18b 後續(sub-track 2,需先設計三種版型)
-- 對正式 DB 跑 `--commit`(等顧問真實資料到位才執行)
+| 欄位 | 文件 | 真實 DB | 腳本處理 |
+|---|---|---|---|
+| `schools.full_name` | 選填 | **NOT NULL** | 留空 → fallback `name` |
+| `programs.lessons_per_week` | 沒提 | **NOT NULL** | CSV/sheet 必填 |
+| `programs.lesson_minutes` | 沒提 | NOT NULL,default 50 | 接受空,用 default |
+| `housing.city` | 沒提 | **NOT NULL** | 必填,缺 → blocking |
+| `tuition_tiers.weeks_min/max` | `min_weeks/max_weeks` | DB 是 `weeks_min/max` | 兩種名字都接受 |
+| `tuition_tiers.campus_id` | 沒提 | 有,nullable | sheet 加可選 `city` → 解 campus_id;無則 null + WARN |
+
+---
+
+## 匯入後驗證 SQL(`validate-import.sql`)
+
+`--commit` 跑完後,到 [Supabase Studio SQL Editor](https://supabase.com/dashboard/project/uxxpagylkdljjaxslmyj/sql/new) 整段貼或一段段跑。
+
+7 大檢查區塊:
+1. **各表筆數**(對照腳本 stdout 摘要)
+2. **FK 孤兒檢查**(全 0)
+3. **國籍欄位完整性**(每筆 schools 都有 nationality_breakdown,每條目都有 pct)
+4. **city_info 新欄 + CAD mirror**(CAD 城市 _cad mirror 完整)
+5. **幣別都是 ISO code**(無 `$` / `£` 符號)
+6. **NOT NULL 完整性 spot check**
+7. **persona_match 對 master list 驗證**(7 個有效 tag,UI-only 4 個不該出現)
+
+---
+
+## 不在本腳本範圍的事(18b backlog)
+
+- EF `personaLabels` 加 `pr_immigration` 中文 label
+- EF 切讀 `city_info.cost_of_living_monthly`(取代舊 `_cad` 欄)
+- 對所有 `personaLabels[p] ?? p` render path 加 fallback(master 外 tag 顯示原始 key)
+- EF redeploy(以上三個併入下次 EF 改動一次處理,不單獨 v28)
+
+---
 
 ## 修訂歷史
 
 | 日期 | 變更 |
 |---|---|
-| 2026-06-15 | Phase 14c 初版 — 腳本就緒 |
+| 2026-06-15 | Phase 14c 初版 — CSV 路徑 `import-data.js` 就緒 |
 | 2026-06-15 | Phase 18b sub-track 1 — 移除 `top_nationalities` 雙寫(該欄位已 DROP) |
-
----
-
+| 2026-06-16 | Phase 14c 加 Sheets 直連 `import-from-sheets.js`(主路徑);共用 `validate-import.sql`;CSV 路徑改為備援 |
