@@ -18,9 +18,10 @@
  *   SUPABASE_URL=... (or VITE_SUPABASE_URL)
  *   SUPABASE_SERVICE_ROLE_KEY=...  ← 必填(--commit 時),繞 RLS
  *
- * 6 個 tab 名稱必須一字不差:
+ * 6 個指定 tab 名稱必須一字不差:
  *   schools / city_info / campuses / programs / tuition_tiers / housing
- * 缺一或多出未知 tab → 報錯停止。
+ * 缺任一指定 tab → 報錯停止。多出的非結構 tab(config / import-log /
+ * staging 等)一律忽略,只讀指定的 6 個。
  *
  * Header-based 對映(不靠欄序);空 cell → null;非整數的 integer 欄會 round + warn。
  *
@@ -128,13 +129,14 @@ async function readSpreadsheet(sheets) {
   const meta = await sheets.spreadsheets.get({ spreadsheetId: flags.sheetId });
   const sheetNames = meta.data.sheets.map(s => s.properties.title);
 
+  // 缺任一指定 tab → 報錯;多出的非結構 tab(config / import-log / staging 等)忽略
   const missing = EXPECTED_TABS.filter(n => !sheetNames.includes(n));
-  const unexpected = sheetNames.filter(n => !EXPECTED_TABS.includes(n));
-  if (missing.length || unexpected.length) {
-    const parts = [];
-    if (missing.length) parts.push(`缺 tab: ${missing.join(', ')}`);
-    if (unexpected.length) parts.push(`多出未知 tab: ${unexpected.join(', ')}`);
-    throw new Error('Spreadsheet tab 不符 — ' + parts.join(' | '));
+  if (missing.length) {
+    throw new Error(`Spreadsheet 缺指定 tab: ${missing.join(', ')}`);
+  }
+  const extra = sheetNames.filter(n => !EXPECTED_TABS.includes(n));
+  if (extra.length) {
+    console.log(`ℹ️  忽略 ${extra.length} 個非結構 tab: ${extra.join(', ')}`);
   }
 
   const tabs = {};
