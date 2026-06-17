@@ -89,11 +89,10 @@
 
 ---
 
-## 🟢 報價系統 SSO(非 Phase 編號內的新功能)✅VERIFIED
+## 🟢 報價系統 SSO ✅VERIFIED(2026-06-17 chain 驗證通過)
 
-- `issue-quote-token` EF v1(commit `237b4c8`)+ Dashboard「開報價系統」按鈕,做報價系統 SSO。
+- **報價系統 SSO**:簽發後端 `issue-quote-token` EF v1 + Dashboard「開報價系統」按鈕**已驗證通過**。點按鈕後新分頁 URL = `<target>/?t=eyJ...`(有效 JWT),`QUOTE_SSO_SECRET` 已設。剩下兩件事都在放洋側:(1) 提供真實報價系統 URL;(2) 對方驗 token + 視為登入。詳見 `SSO_STATUS.md`(含給放洋的 handoff 區塊,等放洋對接時複製過去即可)。
 - `view-page` EF v4 屬公開頁服務鏈(**deployed-only,repo 內無 source code** — 早期 Studio 直接 deploy 留下的歷史,未追蹤進 git)。
-- 細部現況另見 `SSO_STATUS.md`。
 - ⚠ 這兩支不在 Phase 編號管理內,是否納入正式 phase 看決定。
 
 ---
@@ -131,8 +130,7 @@
 | Sydney 是否在 city_info | 待確認 |
 | 認證(SA / OAuth / API key) | 待設,dry-run 前置 |
 | 帳號管理(`ACCOUNT_MGMT_SPEC.md`) | 已拍板待排期,等 §0 五問 + 12 人名單 |
-| `VITE_QUOTE_SYSTEM_URL` 是否已填 | SSO_STATUS §三第 2 條;待確認 |
-| `QUOTE_SSO_SECRET` 是否已設 | SSO_STATUS §三第 2 條;待 user 點按鈕測 |
+| 報價系統 SSO 對接(真實 URL + 對方驗 token) | ✅ CMS 側完工(secret 已設、token 簽得出 + 開新分頁),等放洋側對接,詳 `SSO_STATUS.md` |
 
 ---
 
@@ -185,3 +183,4 @@ FY-school-cms/(repo 根)
 | 日期 | 變更 |
 |---|---|
 | 2026-06-17 | 正式版落地:依 live git log + Supabase MCP 校過 12 個 hash / 11 個 migration / 3 個 EF deployed state / DB schema。校正 6/12 舊版的兩處過期、補 view-page deployed-only 註記。 |
+| 2026-06-17 | SSO chain 驗證通過(EF 簽出有效 JWT 到新分頁);`SSO_STATUS.md` 整份更新;狀態從「secret 待確認」→「等放洋對接」 |
