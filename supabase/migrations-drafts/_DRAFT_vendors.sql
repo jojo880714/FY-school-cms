@@ -1,6 +1,6 @@
 -- Group 2 B 草稿(NOT APPLY)— 新增 vendors 表
 --
--- 為什麼:Laura 確認 Q1 = a。引入「廠商」這層,跟報價系統一致。
+-- 為什麼:已拍板引入「廠商」這層,跟報價系統一致(Q1 = a)。
 -- 之前 CMS 的 schools 表沒有「廠商」概念,所有學校 flat 列。
 -- 新結構:vendors(廠商)→ schools(校,可能跨廠商 — 同一校在不同廠商代理)
 --                       → campuses(校區)

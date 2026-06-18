@@ -1,6 +1,6 @@
 -- Group 2 B 草稿(NOT APPLY)— 新增 cases 表(案件 MVP)
 --
--- 設計原則(Laura 拍板):
+-- 設計原則(已拍板):
 --   - 案件由 CRM 之後接管,CMS 內輕量,**預留 crm_case_id** 給將來指向
 --   - 1 個學生 = 1 個案件,1 個案件 = N 張 LP(generated_pages)
 --   - dedup 用 student_name + student_contact(隱性建立,顧問無感)

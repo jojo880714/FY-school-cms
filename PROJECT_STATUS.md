@@ -116,7 +116,7 @@
 
 ### 設計指令
 
-**`/tmp/cms-design-prompt-v3.md`** — 完整 self-contained design prompt,等 Laura review 完丟給 Claude Design。
+**`/tmp/cms-design-prompt-v3.md`** — 完整 self-contained design prompt,等 user review 完丟給 Claude Design。
 
 ### Group 2 Prep(2026-06-18,設計沒來前先做的後端 prep)
 
@@ -130,7 +130,7 @@
 
 ### 14c 真實資料匯入的新位置
 
-原本是「Laura 用 Google Sheets 匯入學校資料」,**新方向下會被取代**:
+原本是「用 Google Sheets 匯入學校資料」,**新方向下會被取代**:
 - 學校資料來源改成「報價系統 SCHOOL_DATA」(Group 2 C ETL 計畫)
 - 14c sheet 仍可保留為「人工補充欄位」工具(min_age / persona_match / one_liner 等報價系統沒的),但**不再是主資料源**
 
