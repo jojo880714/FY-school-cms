@@ -88,7 +88,55 @@
 
 ---
 
-## 🟡 Phase 14c — 真實資料匯入(已推進,架構待釐清)
+## 🎯 v3 大方向(2026-06-18 拍板)
+
+### CMS 重新定位:**顧問完整工作流系統**(不只 LP 工具)
+
+> 顧問拿到學生需求 → 進 CMS → 產 LP 諮詢 → 即時記錄學生反應 → 出報價單 → 收單
+
+### 五大重大決定
+
+| # | 決定 | 影響 |
+|---|---|---|
+| 1 | **方案 C**:CMS 嵌入 Nexus 子模組,Path 2(1-2 個月) | LoginPage 砍,身份從 Nexus 拿 |
+| 2 | **報價系統併進 CMS**(不再是兩個系統) | 報價計算引擎照搬,從 LP 一鍵出報價 |
+| 3 | **案件由 CRM 之後接管**,CMS 內 MVP 輕量 | cases 表預留 `crm_case_id` 給將來指向 |
+| 4 | **fanyang-consult 玫瑰+金視覺**(取代鮮粉+深藍) | 全套 token + Noto Sans TC + DM Mono |
+| 5 | **5 大區塊 + advisor-only 方案配置**(諮詢痛點解) | 顧問 demo 中即時 key 學生反應 + 1 鍵帶資料開報價 |
+
+### 5 大區塊架構
+
+```
+1. 案件首頁(MVP,等 CRM 接管)
+2. LP 產生器 Wizard(6 step,廠商→國→校→排版→樣式→完成)
+3. LP 諮詢模式 ★ 痛點解(advisor-only 方案配置 + 學生反應 4 級 + 即時試算)
+4. 報價單 Wizard(從 LP 帶資料,6 層算費 + 出 PDF)
+5. 分析報表(5 面向:運營 / 轉化 / 學校偏好 / 學生洞察 / 管理員)
+```
+
+### 設計指令
+
+**`/tmp/cms-design-prompt-v3.md`** — 完整 self-contained design prompt,等 Laura review 完丟給 Claude Design。
+
+### Group 2 Prep(2026-06-18,設計沒來前先做的後端 prep)
+
+| 項 | 狀態 | 位置 |
+|---|---|---|
+| **E. Google Fonts + token 預載入** | ✅ | `index.html`(fonts preconnect)+ `src/styles/tokens.css`(玫瑰+金 token) |
+| **A. 報價計算引擎 TS module** | ✅ | `src/lib/quotation/`(types / helpers / calculate / index,從 app.js 6 層算費 port) |
+| **B. Schema migration 草稿** | ✅(draft only,**NOT APPLY**) | `supabase/migrations-drafts/`(vendors / tuition_tiers ext / cases / lp_school_config / quotations) |
+| **C. SCHOOL_DATA ETL 計畫** | ✅(計畫 only) | `scripts/etl-school-data-plan.md`(SCHOOL_DATA 478KB → CMS schema mapping + script skeleton) |
+| **D. 文件更新** | ✅(本 commit) | PROJECT_STATUS / ROADMAP |
+
+### 14c 真實資料匯入的新位置
+
+原本是「Laura 用 Google Sheets 匯入學校資料」,**新方向下會被取代**:
+- 學校資料來源改成「報價系統 SCHOOL_DATA」(Group 2 C ETL 計畫)
+- 14c sheet 仍可保留為「人工補充欄位」工具(min_age / persona_match / one_liner 等報價系統沒的),但**不再是主資料源**
+
+---
+
+## 🟡 Phase 14c — 真實資料匯入(部分過期,SCHOOL_DATA ETL 將取代)
 
 ### 本 chat(repo + Supabase)側 ✅VERIFIED
 
@@ -172,3 +220,4 @@ FY-school-cms/(repo 根)
 |---|---|
 | 2026-06-17 | 正式版落地:依 live git log + Supabase MCP 校過 12 個 hash / 11 個 migration / 3 個 EF deployed state / DB schema。校正 6/12 舊版的兩處過期、補 view-page deployed-only 註記。 |
 | 2026-06-18 | 方向轉換:CMS 整合策略改為方案 C(重寫為 Nexus 子模組),身份/權限/SSO 由 Nexus 接管。本次清理:刪除 `issue-quote-token` EF、Dashboard「開報價系統」按鈕、`ACCOUNT_MGMT_SPEC.md`、`SSO_STATUS.md`、`VITE_QUOTE_SYSTEM_URL` env var、`QUOTE_SSO_SECRET` Supabase env。CMS 資料層(6 張表 / `generate-page` EF / 14c 匯入腳本 / persona / migrations)保留不動,等下一波決策。 |
+| 2026-06-18 PM | **v3 大方向落地**:CMS 重定位為顧問完整工作流(LP+demo+報價+分析,5 區塊)。報價系統併進 CMS。案件 MVP 等 CRM 接管。視覺改 fanyang-consult 玫瑰+金。Group 2 Prep(E/A/B/C/D):Google Fonts + 視覺 token、報價計算引擎 TS module、5 張表 migration 草稿、SCHOOL_DATA ETL 計畫、文件更新 — 全部就緒,等 Claude Design 交付 wireframe 後啟動整合 phase。Design prompt v3 在 `/tmp/cms-design-prompt-v3.md`。 |

@@ -1,0 +1,83 @@
+/**
+ * Design Tokens — fanyang-consult 視覺方向預載入
+ *
+ * 用途:等 Claude Design 交付 wireframe + 視覺重做時,新頁面直接 import 本檔
+ *       就能用 `var(--rose)` / `var(--gold)` / `var(--ink)` 等變數。
+ *
+ * Group 2 E 預備 — 不阻擋 design,等正式 design 來時可一鍵套用。
+ *
+ * **注意**:現有頁面(LoginPage / DashboardPage / CreatePage)目前 100% 用
+ * inline styles 寫色票,不會被本檔影響。本檔只在新頁面 import 時生效。
+ *
+ * Token 來源:https://jojo880714.github.io/fanyang-consult/fanyang-consult.html
+ */
+
+:root {
+  /* ─── Color tokens ──────────────────────────────────────── */
+
+  /* 主色:玫瑰系 */
+  --rose:    #C8436A;
+  --rose-d:  #8C2445;   /* hover / 強調 */
+  --rose-l:  #FBE9EF;   /* 淺底 */
+  --rose-m:  #F2B3C5;   /* 中色 */
+
+  /* 輔色:金 */
+  --gold:    #C4893C;
+  --gold-l:  #F7EDD8;
+
+  /* 中性灰階 */
+  --bg:      #FAFAF9;
+  --sur:     #FFFFFF;
+  --sur2:    #F0F0EE;
+  --ink:     #1A1A1E;   /* 標題 / 主文字 */
+  --ink2:    #3A3A40;
+  --ink3:    #6A6A70;   /* 副文字 */
+  --ink4:    #9A9A9F;   /* placeholder */
+  --line:    rgba(0,0,0,0.08);
+  --line2:   rgba(0,0,0,0.14);
+
+  /* 語意色 */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error:   #EF4444;
+  --info:    #3B82F6;
+
+  /* ─── Radius ────────────────────────────────────────────── */
+  --r-sm: 6px;
+  --r:    10px;
+  --r-lg: 14px;
+
+  /* ─── Spacing(8px grid)─────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ─── Type ──────────────────────────────────────────────── */
+  --sans:    'Noto Sans TC', system-ui, -apple-system, 'Segoe UI',
+             'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --display: var(--sans);
+  --mono:    'DM Mono', ui-monospace, Consolas, monospace;
+
+  --text-xs:   12px;
+  --text-sm:   14px;
+  --text-base: 16px;
+  --text-lg:   18px;
+  --text-xl:   24px;
+  --text-2xl:  32px;
+  --text-3xl:  44px;
+
+  /* ─── Shadow(極輕,近 flat)──────────────────────────── */
+  --shadow-s: none;
+  --shadow-m: 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-l: 0 4px 16px rgba(0,0,0,0.08);
+
+  /* ─── Misc ──────────────────────────────────────────────── */
+  --top-bar-h: 52px;
+  --icon-stroke: 1.6;
+  --icon-size: 18px;
+}

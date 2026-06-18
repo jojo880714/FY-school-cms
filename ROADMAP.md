@@ -335,6 +335,52 @@ RWD:
 
 ---
 
+## 🎯 Phase 20 — CMS v3 重做(顧問完整工作流)[P0] 🚧
+
+> 2026-06-18 Laura 拍板。重做整個 CMS:LP 工具 → 顧問完整工作流。
+> Path 2:1-2 個月慢慢做,不急。
+
+### 五大決定
+
+1. **方案 C**:CMS 嵌入 Nexus 子模組(LoginPage 砍,身份 Nexus 拿)
+2. **報價系統併進 CMS**(報價計算引擎照搬,從 LP 一鍵出報價)
+3. **案件 MVP**(等 CRM 接管,設計輕量、預留 `crm_case_id`)
+4. **fanyang-consult 視覺**(玫瑰+金,Noto Sans TC + DM Mono)
+5. **5 大區塊架構**:案件首頁 / LP wizard / LP 諮詢模式(★ 痛點解)/ 報價 wizard / 分析報表
+
+### Phase 20 子階段(待 Claude Design 交付後展開)
+
+- **20a**:Design 交付 → 5 區塊 wireframe + 公開 LP 範本 + IA 圖
+- **20b**:5 張 migration 套用(vendors / tuition_tiers ext / cases / lp_school_config / quotations,從 `supabase/migrations-drafts/` 搬正)
+- **20c**:SCHOOL_DATA ETL(從報價系統 app.js 灌進 CMS DB,見 `scripts/etl-school-data-plan.md`)
+- **20d**:案件首頁(取代 Dashboard,案件分組 + 狀態 chip + 篩選)
+- **20e**:LP 產生器 Wizard(取代 CreatePage 巨無霸,Step 1-6 + 草稿 autosave)
+- **20f**:**LP 諮詢模式 ★**(advisor-only 方案配置 + 學生反應 4 級 + 即時試算)
+- **20g**:報價 Wizard(整合報價計算引擎 `src/lib/quotation/`)
+- **20h**:報價 PDF 出單(html2canvas → PNG / PDF)
+- **20i**:分析報表(5 面向)
+- **20j**:公開 LP 視覺重做(comparison.html → fanyang-consult 風格)
+
+### Group 2 Prep(2026-06-18,設計沒來前先做)
+
+已完成的後端 prep,等 design 來時可以立刻用:
+
+- ✅ Google Fonts 預載 + 視覺 token(`src/styles/tokens.css`)
+- ✅ 報價計算引擎 TS module(`src/lib/quotation/`,6 層算費 port)
+- ✅ 5 張 migration 草稿(`supabase/migrations-drafts/`,NOT APPLY)
+- ✅ SCHOOL_DATA ETL 計畫(`scripts/etl-school-data-plan.md`)
+- ✅ 文件更新(PROJECT_STATUS + ROADMAP)
+
+### 紅線
+
+- ❌ Nexus 自己的頁面不設計(login / dashboard / 模組管理 / 公告 等都是 Nexus 的事)
+- ❌ CRM 不設計(主管另做中,等啟用後對接)
+- ❌ 學校資料維護後台不做(那是廠商管理系統的事)
+- ❌ 報價計算邏輯不能變(從 app.js 照搬,鎖死)
+- ❌ PIN '991234' 機制不留(改為 Nexus role-based 權限)
+
+---
+
 ## 跨 Phase 通用品質要求 [P0,每個 Phase 同步交付]
 
 | 項目 | 要求 |
@@ -373,3 +419,4 @@ RWD:
 | 2026-06-16 | Phase 18b backlog 全部落地(EF v28):`personaLabels` 加 `pr_immigration`;Section 8 City Cards 切 `cost_of_living_monthly` + currency;`cost_of_living_monthly_cad` 已 DROP;`scripts/import-from-sheets.js` / `validate-import.sql` 同步清理。 |
 | 2026-06-16 | 收 ACCOUNT_MGMT_SPEC.md(CMS 帳號管理 + advisors 表 + email/密碼認證),已拍板待排期。新增「已拍板待排期」段;原「角色權限」候選項由本 spec 取代。 |
 | 2026-06-18 | 方向轉換:`ACCOUNT_MGMT_SPEC.md` 條目移除(已隨檔刪除;帳號管理改由 Nexus 接管,不再走 advisors 表路線);「已拍板待排期」段移除(已無待排期項目)。 |
+| 2026-06-18 PM | **加 Phase 20** — CMS v3 重做(顧問完整工作流,5 區塊,報價系統併入,案件等 CRM 接管,fanyang-consult 視覺)。10 個 sub-phase(20a-20j)。Group 2 Prep 全部就緒。等 Claude Design 交付 wireframe 後啟動 Phase 20a。 |
