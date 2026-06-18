@@ -4,28 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{PAGE_TITLE}}</title>
+<!-- Phase 20 Group 2 prep:Google Fonts(Noto Sans TC + DM Mono)-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* 放洋留遊學品牌色票 (Phase 12) */
-    --color-primary:        #E8195A; /* 主色 */
-    --color-primary-hover:  #C8174A; /* hover / 強調文字 */
-    --color-primary-tint:   #FCE8EE; /* 淡主色底 */
-    --color-accent:         #2B4A6B; /* 沉穩深藍 */
-    --color-bg:             #FAF7F2; /* 暖白頁面底 */
+    /* 放洋留遊學品牌色票 — Phase 20(fanyang-consult 玫瑰+金)*/
+    --color-primary:        #C8436A; /* 主色:玫瑰 */
+    --color-primary-hover:  #8C2445; /* hover / 強調文字:深玫瑰 */
+    --color-primary-tint:   #FBE9EF; /* 淡主色底:玫瑰 lite */
+    --color-accent:         #C4893C; /* 輔色:金 */
+    --color-bg:             #FAFAF9; /* 暖白頁面底 */
     --color-card:           #FFFFFF;
-    --color-text:           #2C2C2A; /* 暖黑標題 */
-    --color-text-muted:     #6B6B6B;
-    --color-border:         #EAE5DD; /* 暖調細邊 */
+    --color-text:           #1A1A1E; /* 暖黑標題 */
+    --color-text-muted:     #6A6A70;
+    --color-border:         #EAE5DD; /* 暖調細邊(保留)*/
+
+    /* fanyang-consult 完整 token alias(供新 section 使用)*/
+    --rose:    #C8436A;
+    --rose-d:  #8C2445;
+    --rose-l:  #FBE9EF;
+    --rose-m:  #F2B3C5;
+    --gold:    #C4893C;
+    --gold-l:  #F7EDD8;
 
     --radius:     16px;
     --radius-sm: 10px;
-    --shadow-card:  0 2px 8px rgba(44, 44, 42, 0.04);
-    --shadow-hover: 0 4px 16px rgba(44, 44, 42, 0.08);
+    --shadow-card:  0 2px 8px rgba(26, 26, 30, 0.04);
+    --shadow-hover: 0 4px 16px rgba(26, 26, 30, 0.08);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
     background: var(--color-bg);
     color: var(--color-text);
     line-height: 1.65;
@@ -33,13 +45,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* HERO — 暖白底 + 雙色光暈,品牌色 + 沉穩深藍 */
+  /* HERO — 暖白底 + 雙色光暈,玫瑰 + 金 */
   .hero {
     position: relative;
     overflow: hidden;
     padding: 72px 20px 60px;
     text-align: center;
-    background: linear-gradient(135deg, #FAF7F2 0%, #FCE8EE 100%);
+    background: linear-gradient(135deg, #FAFAF9 0%, #FBE9EF 100%);
     border-bottom: 1px solid var(--color-border);
   }
   .hero::before {
@@ -47,7 +59,7 @@
     position: absolute;
     top: -50%; right: -10%;
     width: 60%; height: 200%;
-    background: radial-gradient(circle, rgba(43, 74, 107, 0.07) 0%, transparent 60%);
+    background: radial-gradient(circle, rgba(196, 137, 60, 0.07) 0%, transparent 60%);
     pointer-events: none;
   }
   .hero::after {
@@ -55,7 +67,7 @@
     position: absolute;
     bottom: -30%; left: -10%;
     width: 50%; height: 150%;
-    background: radial-gradient(circle, rgba(232, 25, 90, 0.08) 0%, transparent 60%);
+    background: radial-gradient(circle, rgba(200, 67, 106, 0.08) 0%, transparent 60%);
     pointer-events: none;
   }
   .hero-content {
@@ -101,7 +113,7 @@
     font-weight: 600;
     padding: 7px 18px;
     border-radius: 99px;
-    box-shadow: 0 1px 2px rgba(232, 25, 90, 0.08);
+    box-shadow: 0 1px 2px rgba(200, 67, 106, 0.08);
   }
 
   /* NAV — 半透明白底 + blur */
@@ -364,7 +376,7 @@
     border-radius: 12px;
     padding: 16px 14px;
     text-align: center;
-    border: 1px solid rgba(232, 25, 90, 0.12);
+    border: 1px solid rgba(200, 67, 106, 0.12);
   }
   .calc-school-name {
     font-size: 11px;
