@@ -39,8 +39,6 @@ export function DashboardPage() {
   // Phase 19d
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
-  // Quote-system SSO
-  const [ssoLoading, setSsoLoading] = useState(false);
 
   // 搜尋去抖動（300ms）
   useEffect(() => {
@@ -166,28 +164,6 @@ export function DashboardPage() {
     });
   }
 
-  // 開報價系統 — 呼叫 issue-quote-token Edge Function 簽 SSO JWT,開新分頁帶 token
-  async function openQuoteSystem() {
-    const quoteUrl = (import.meta.env.VITE_QUOTE_SYSTEM_URL as string | undefined)?.trim();
-    if (!quoteUrl) {
-      alert('VITE_QUOTE_SYSTEM_URL 未設定。請在 .env.local / .env.production 補上報價系統 URL');
-      return;
-    }
-    setSsoLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('issue-quote-token');
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-      if (!data?.token) throw new Error('Edge Function 沒回傳 token');
-      const sep = quoteUrl.includes('?') ? '&' : '?';
-      window.open(`${quoteUrl}${sep}t=${encodeURIComponent(data.token)}`, '_blank', 'noopener,noreferrer');
-    } catch (err) {
-      alert('無法開啟報價系統: ' + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSsoLoading(false);
-    }
-  }
-
   return (
     <div style={{ minHeight: '100vh', background: '#FAF7F2' }}>
       <header
@@ -214,22 +190,6 @@ export function DashboardPage() {
           <span style={{ fontSize: '13px', color: '#6B6B6B' }}>
             {user?.email}
           </span>
-          <button
-            onClick={openQuoteSystem}
-            disabled={ssoLoading}
-            style={{
-              fontSize: '12px',
-              padding: '5px 10px',
-              border: '1px solid #EAE5DD',
-              background: 'white',
-              borderRadius: '6px',
-              cursor: ssoLoading ? 'not-allowed' : 'pointer',
-              color: '#2B4A6B',
-              opacity: ssoLoading ? 0.6 : 1,
-            }}
-          >
-            {ssoLoading ? '產生 token...' : '🔗 開報價系統'}
-          </button>
           <button
             onClick={signOut}
             style={{

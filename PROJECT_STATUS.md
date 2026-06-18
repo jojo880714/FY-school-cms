@@ -16,7 +16,6 @@
 |---|---|
 | EF `generate-page` | **v28** ACTIVE(id `2de971ae…`, verify_jwt=true) |
 | EF `view-page` | **v4** ACTIVE(verify_jwt=false)— 公開頁服務 |
-| EF `issue-quote-token` | **v1** ACTIVE(verify_jwt=true)— 報價系統 SSO(commit `237b4c8`) |
 | `schools.top_nationalities` | **已 DROP**(DB 0 columns) |
 | `schools.nationality_breakdown` | 存在(DB 1 column) |
 | `city_info` 生活費欄 | `cost_of_living_monthly` + `cost_of_living_currency` + `country`(14a 加);舊 `cost_of_living_monthly_cad` **已 DROP** |
@@ -89,14 +88,6 @@
 
 ---
 
-## 🟢 報價系統 SSO ✅VERIFIED(2026-06-17 chain 驗證通過)
-
-- **報價系統 SSO**:簽發後端 `issue-quote-token` EF v1 + Dashboard「開報價系統」按鈕**已驗證通過**。點按鈕後新分頁 URL = `<target>/?t=eyJ...`(有效 JWT),`QUOTE_SSO_SECRET` 已設。剩下兩件事都在放洋側:(1) 提供真實報價系統 URL;(2) 對方驗 token + 視為登入。詳見 `SSO_STATUS.md`(含給放洋的 handoff 區塊,等放洋對接時複製過去即可)。
-- `view-page` EF v4 屬公開頁服務鏈(**deployed-only,repo 內無 source code** — 早期 Studio 直接 deploy 留下的歷史,未追蹤進 git)。
-- ⚠ 這兩支不在 Phase 編號管理內,是否納入正式 phase 看決定。
-
----
-
 ## 🟡 Phase 14c — 真實資料匯入(已推進,架構待釐清)
 
 ### 本 chat(repo + Supabase)側 ✅VERIFIED
@@ -129,8 +120,6 @@
 | EC stub / FK | 待填表補齊或移除 |
 | Sydney 是否在 city_info | 待確認 |
 | 認證(SA / OAuth / API key) | 待設,dry-run 前置 |
-| 帳號管理(`ACCOUNT_MGMT_SPEC.md`) | 已拍板待排期,等 §0 五問 + 12 人名單 |
-| 報價系統 SSO 對接(真實 URL + 對方驗 token) | ✅ CMS 側完工(secret 已設、token 簽得出 + 開新分頁),等放洋側對接,詳 `SSO_STATUS.md` |
 
 ---
 
@@ -139,7 +128,7 @@
 ```
 FY-school-cms/(repo 根)
 ├── ROADMAP.md, IMPORT_TEMPLATES.md, MIGRATIONS.md, OPERATIONS.md, BETA_CHECKLIST.md
-├── SSO_STATUS.md, ACCOUNT_MGMT_SPEC.md, PROJECT_STATUS.md(本檔)
+├── PROJECT_STATUS.md(本檔)
 ├── scripts/
 │   ├── import-from-sheets.js   ← 14c 直連匯入(34a2834);tab guard 放寬於 0ebe775
 │   ├── import-data.js          ← CSV 備援匯入
@@ -149,8 +138,7 @@ FY-school-cms/(repo 根)
 │   ├── migrations/             ← 11 個(見上)
 │   ├── templates/comparison.html
 │   └── functions/
-│       ├── generate-page/index.ts        ← v28(repo + deployed)
-│       └── issue-quote-token/index.ts    ← v1(repo + deployed,報價 SSO)
+│       └── generate-page/index.ts        ← v28(repo + deployed)
 │       # ⚠ view-page v4 deployed-only,repo 內無 source(早期 Studio 直 deploy)
 └── src/pages/
     ├── CreatePage.tsx          ← persona passthrough 濾除
@@ -183,4 +171,4 @@ FY-school-cms/(repo 根)
 | 日期 | 變更 |
 |---|---|
 | 2026-06-17 | 正式版落地:依 live git log + Supabase MCP 校過 12 個 hash / 11 個 migration / 3 個 EF deployed state / DB schema。校正 6/12 舊版的兩處過期、補 view-page deployed-only 註記。 |
-| 2026-06-17 | SSO chain 驗證通過(EF 簽出有效 JWT 到新分頁);`SSO_STATUS.md` 整份更新;狀態從「secret 待確認」→「等放洋對接」 |
+| 2026-06-18 | 方向轉換:CMS 整合策略改為方案 C(重寫為 Nexus 子模組),身份/權限/SSO 由 Nexus 接管。本次清理:刪除 `issue-quote-token` EF、Dashboard「開報價系統」按鈕、`ACCOUNT_MGMT_SPEC.md`、`SSO_STATUS.md`、`VITE_QUOTE_SYSTEM_URL` env var、`QUOTE_SSO_SECRET` Supabase env。CMS 資料層(6 張表 / `generate-page` EF / 14c 匯入腳本 / persona / migrations)保留不動,等下一波決策。 |

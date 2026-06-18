@@ -347,14 +347,6 @@ RWD:
 
 ---
 
-## 已拍板待排期(spec 就緒,等上工訊號)
-
-| 規格 | 範圍 | 觸發 |
-|---|---|---|
-| [ACCOUNT_MGMT_SPEC.md](./ACCOUNT_MGMT_SPEC.md) — CMS 帳號管理 + advisors 表 + email/密碼認證 | 1 migration(advisors + admin_audit + RLS) / 2 EF(admin-manage-users 新 / issue-quote-token 改 join 來源) / 3 前端頁(帳號管理 / 設定新密碼 / email 登入)/ SSO_STATUS.md 更新 | user 給「上工」訊號 + 拍板 spec 內 5 條 open questions(現有 demo 帳號 mapping / 其餘 8 位顧問名單 / app_metadata 雙軌期 / deactivate 策略 / 寄信 from 地址) |
-
----
-
 ## 待討論項目(尚未列入 Phase,需確認方向再排)
 
 | 候選項目 | 為什麼納入考量 | 待釐清 |
@@ -379,4 +371,5 @@ RWD:
 | 2026-06-15 | Persona vocabulary 對齊第一批:master list 6→7(加 `pr_immigration`);4 個 UI-only passthrough(`lang_school` / `short_tour` / `custom_tour` / `undecided`);CreatePage `getPersonaMatchScore` 加 passthrough 濾除。EF `personaLabels` 加 `pr_immigration` 中文 label + redeploy 排 18b backlog。 |
 | 2026-06-15 | 開 Phase 18b backlog 段:`personaLabels` 加 `pr_immigration` + 確保所有 render path 對 master-list 外 tag 都有 fallback(不爆版),併入下次 EF 改動一次 redeploy。 |
 | 2026-06-16 | Phase 18b backlog 全部落地(EF v28):`personaLabels` 加 `pr_immigration`;Section 8 City Cards 切 `cost_of_living_monthly` + currency;`cost_of_living_monthly_cad` 已 DROP;`scripts/import-from-sheets.js` / `validate-import.sql` 同步清理。 |
-| 2026-06-16 | 收 [ACCOUNT_MGMT_SPEC.md](./ACCOUNT_MGMT_SPEC.md)(CMS 帳號管理 + advisors 表 + email/密碼認證),已拍板待排期。新增「已拍板待排期」段;原「角色權限」候選項由本 spec 取代。 |
+| 2026-06-16 | 收 ACCOUNT_MGMT_SPEC.md(CMS 帳號管理 + advisors 表 + email/密碼認證),已拍板待排期。新增「已拍板待排期」段;原「角色權限」候選項由本 spec 取代。 |
+| 2026-06-18 | 方向轉換:`ACCOUNT_MGMT_SPEC.md` 條目移除(已隨檔刪除;帳號管理改由 Nexus 接管,不再走 advisors 表路線);「已拍板待排期」段移除(已無待排期項目)。 |
