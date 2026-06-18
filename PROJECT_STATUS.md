@@ -118,6 +118,44 @@
 
 **`/tmp/cms-design-prompt-v3.md`** — 完整 self-contained design prompt,等 user review 完丟給 Claude Design。
 
+### 🛑 Phase 20 entity 凍住(2026-06-18 校正)
+
+**背景** — Phase 20 / 方案 C / Path 2 的真實範圍是「**三系統合併**」(CMS + 報價系統 + TKB 廠商系統 → Nexus 為 SSOT),**不是 CMS 單系統重寫**。三系統 master plan 文件尚未落地,Nexus / 報價 / TKB schema 也尚未對齊。
+
+**影響** — CMS 這邊 Phase 20 的 entity 型別(`Vendor` / `Case` / `LPSchoolConfig` / `Quotation`)目前是 CMS 視角猜的 placeholder,**SSOT 在 Nexus**,合併 schema 定稿後要重寫(或改 `import from` Nexus type 包)。
+
+**真實時程修正** — 原估「Path 2 = 1-2 個月」是 single-system 視角。三系統合併真實時程接近 **3-6 個月**(schema 整合 + 流程整合 + 權限模型 + historical data 遷移)。
+
+#### 凍住範圍
+
+直到三系統 master plan + Nexus schema 初稿出來前:
+
+- ❌ 不擴張 `src/types/phase20.ts`(維持目前 5 個 type 當 placeholder)
+- ❌ 不展開 entity types 到 components / pages
+- ❌ 不 apply `supabase/migrations-drafts/` 內 `cases` / `lp_school_config` / `quotations` 三張(`vendors` / `tuition_tiers ext` 可獨立評估)
+- ❌ 不主動推 Phase 20 wizard / Phase 20a-j 任何子階段
+- ❌ 不擴大 Claude Design brief(等 schema 對齊)
+
+#### 不影響範圍(已 commit,pure / 跟 entity 解耦)
+
+- ✅ `src/lib/quotation/` — 算費引擎,純函式
+- ✅ `src/lib/student-filter/` — 過濾函式,純函式(73 tests)
+- ✅ `src/lib/api/` — 只接 Supabase,fail throw,不做業務邏輯
+- ✅ `src/hooks/` — 包 api 成 React state,不依賴 Phase 20 entity
+- ✅ `src/styles/tokens.css` — 視覺 token,不依賴 entity
+
+#### 解凍條件
+
+- 三系統 master plan(phase / 時程 / 各系統 owner / 整合順序)落地
+- Nexus / 報價 / TKB schema 對齊版定稿
+- 上面兩條任一條到位,本區塊 review;兩條都到位才解凍 entity 型別擴張
+
+#### 同步風險
+
+四條 chat 線(CMS / 報價 / TKB 廠商 / Nexus)+ master plan 在 jojo 頭腦裡。CMS 這條 chat 看不到其他三條的進度,所以本檔的建議是 **partial view**。本檔的 `Phase 20` 區塊在 master plan 落地前 **不會主動更新**。
+
+---
+
 ### Group 2 Prep(2026-06-18,設計沒來前先做的後端 prep)
 
 | 項 | 狀態 | 位置 |

@@ -1,8 +1,29 @@
 /**
- * Phase 20 — 顧問完整工作流新增型別
+ * 🛑 PHASE 20 ENTITY TYPES — PLACEHOLDER,凍住擴張(2026-06-18 校正)
+ * ════════════════════════════════════════════════════════════════════════════
  *
- * 對應 `supabase/migrations-drafts/_DRAFT_*.sql`(NOT APPLY 等實作 phase)。
- * 設計階段先寫好型別,等 design + migration 落地後 lib/api/ 直接拿來用。
+ * 這些 type 是 CMS 視角先猜的 placeholder。
+ *
+ * Phase 20 真實範圍是「三系統合併」(CMS + 報價系統 + TKB 廠商系統 → Nexus 為 SSOT),
+ * `Vendor` / `Case` / `LPSchoolConfig` / `Quotation` 的 SSOT 在 **Nexus**,不是 CMS。
+ *
+ * 三系統 master plan + Nexus / 報價 / TKB schema 對齊版尚未落地,所以:
+ *
+ *   ❌ 不擴張本檔(不加新 type / 不加欄位)
+ *   ❌ 不展開到 components / pages(用了,schema 對齊時會全跟著改)
+ *   ❌ 不 apply `supabase/migrations-drafts/` 內 cases / lp_school_config / quotations
+ *   ✅ 可被 `src/lib/*` 內 pure modules 暫時引用(只當型別參考,不會炸)
+ *
+ * **解凍條件**:
+ *   1. 三系統 master plan(phase / 時程 / owner / 整合順序)落地
+ *   2. Nexus / 報價 / TKB schema 對齊版定稿
+ *
+ * 詳細政策見 `PROJECT_STATUS.md`「🛑 Phase 20 entity 凍住」區塊。
+ *
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * (原本檔頭)
+ * Phase 20 — 顧問完整工作流新增型別。對應 `supabase/migrations-drafts/_DRAFT_*.sql`。
  *
  * 紅線:
  * - 案件由 CRM 之後接管,所以 Case 結構刻意輕量,預留 `crm_case_id`

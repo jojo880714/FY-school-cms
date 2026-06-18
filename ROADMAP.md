@@ -340,6 +340,22 @@ RWD:
 > 2026-06-18 拍板。重做整個 CMS:LP 工具 → 顧問完整工作流。
 > Path 2:1-2 個月慢慢做,不急。
 
+> ### 🛑 2026-06-18 PM 校正:Phase 20 entity 凍住
+>
+> Phase 20 的真實範圍是「**三系統合併**」(CMS + 報價 + TKB → Nexus 為 SSOT),**不是 CMS 單系統重寫**。三系統 master plan + Nexus / 報價 / TKB schema 對齊版尚未出來。
+>
+> **時程修正**:1-2 個月 → **3-6 個月**(三系統合併真實時程)。
+>
+> **凍住**:
+> - `src/types/phase20.ts` 不擴張(目前 5 個 type 當 placeholder)
+> - `supabase/migrations-drafts/` 內 `cases` / `lp_school_config` / `quotations` 三張不 apply
+> - Phase 20a-j 任何子階段不主動啟動
+> - Claude Design brief 不擴大(暫緩)
+>
+> **不影響**(已 commit 的 pure modules 繼續用):`src/lib/quotation/` / `student-filter/` / `api/` / `hooks/` / `src/styles/tokens.css`
+>
+> **解凍條件**:三系統 master plan 落地 + Nexus schema 對齊。詳細政策見 `PROJECT_STATUS.md`「🛑 Phase 20 entity 凍住」區塊。
+
 ### 五大決定
 
 1. **方案 C**:CMS 嵌入 Nexus 子模組(LoginPage 砍,身份 Nexus 拿)
