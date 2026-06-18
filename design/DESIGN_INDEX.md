@@ -1,7 +1,7 @@
 # 語校 CMS — 設計文件索引 · v3
 
 > v3 完全取代 v2（v2 範圍寫錯，把 Nexus 自己的頁面也畫了）。
-> 設計：Claude Design · 2026-06-18 · Review pending: Laura
+> 設計：Claude Design · 2026-06-18 · Review pending
 > 視覺語言：fanyang-consult 玫瑰 + 金 · Noto Sans TC + DM Mono · 圓角 6/10/14 · 近乎 flat
 
 ---
@@ -64,7 +64,7 @@
 
 ---
 
-## 待 Laura 確認的 Assumptions / TODO
+## 待確認的 Assumptions / TODO
 
 | # | 待確認 |
 |---|--------|

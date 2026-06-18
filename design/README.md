@@ -18,7 +18,7 @@
 
 ## 不在 repo 的東西
 
-設計的 `.dc.html` artifacts(`放洋 CMS.dc.html` / `選校建議 LP.dc.html` / `CMS Design Hub.dc.html`)在 Claude Design 的 project space,**不在本 repo**。截圖在 Laura 本機 `~/Downloads/qa` + `~/Downloads/qa2`。
+設計的 `.dc.html` artifacts(`放洋 CMS.dc.html` / `選校建議 LP.dc.html` / `CMS Design Hub.dc.html`)在 Claude Design 的 project space,**不在本 repo**。截圖在本機 `~/Downloads/qa` + `~/Downloads/qa2`。
 
 理由:`.dc.html` 是呈現格式不是 code,實作時看本目錄文字 spec 即可。
 
