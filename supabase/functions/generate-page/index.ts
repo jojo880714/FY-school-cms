@@ -41,10 +41,15 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { schoolsInfo, selectedFields, title, slug, studentProfile, style } = await req.json();
-    // Phase 18b sub-track 2: A 決策 / B 費用 / D 資訊密集。舊頁無 style → 預設 A
-    const overviewStyle: 'A' | 'B' | 'D' = (style === 'B' || style === 'D') ? style : 'A';
-    console.log("Received schools:", schoolsInfo?.length, "slug:", slug, "style:", overviewStyle);
+    const body = await req.json();
+    const { schoolsInfo, selectedFields, title, slug, studentProfile } = body;
+    // Phase 1.1 C2: 雙名接受(零停機:CreatePage 還在送 style,新 EF 同時讀)
+    //   - 新名 cardVariant 優先;舊名 style 為 fallback;最後 default 'A'
+    //   - CreatePage 改名後(C4)再開 cleanup commit 移除 ?? body.style
+    // Phase 1.1 C2: ABCD 4 種(A 學員適配 / B 費用導向 / C 氛圍情感 / D 資訊密集)
+    const raw = body.cardVariant ?? body.style ?? 'A';
+    const overviewStyle: 'A' | 'B' | 'C' | 'D' = (raw === 'B' || raw === 'C' || raw === 'D') ? raw : 'A';
+    console.log("Received schools:", schoolsInfo?.length, "slug:", slug, "cardVariant:", overviewStyle, "(legacy style alias:", body.style, ")");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -209,6 +214,44 @@ serve(async (req: Request) => {
       </div>`;
     }
 
+    // Phase 1.1 C2 — Variant C(氛圍情感型),markup 對齊 LP_card_variants.jsx variant C 精神
+    // ★ watch-point:LP source 的 `c` 是 per-campus(c.moodTag/c.moodDesc/c.moodScene),
+    //   EF item 是 per-school(item.school/campuses[]/programs[]/...)
+    //   → 結構不 1:1 對齊,改用 per-school 欄位映射:
+    //     - mood-tag → strengths[0] / country fallback(校的主氛圍標籤)
+    //     - mood-desc → one_liner(顧問手寫定位)
+    //     - icon-pills → persona_match labels
+    //     - quote-box → 第一個 campus.highlight / one_liner fallback(場景引言)
+    //     - card-foot → 平均週費 + 最低年齡
+    //   inline style 用 CSS variable + fallback,不依賴 page_templates 是否定義 mood-* class
+    function renderC(item: any): string {
+      const s = item.school;
+      const moodTag = (s.strengths && s.strengths[0]) || s.country || '城市氛圍';
+      const moodDesc = s.one_liner || `${s.name} 的學習氛圍`;
+      const pillsArr = (s.persona_match || []).slice(0, 4);
+      const pills = pillsArr.length > 0
+        ? `<div style="display:flex;flex-wrap:wrap;gap:6px">${pillsArr.map((p: string) =>
+            `<span class="city-tag">${personaLabels[p] || p}</span>`).join("")}</div>`
+        : "";
+      const firstHighlight = (item.campuses || []).map((c: any) => c.highlight).filter(Boolean)[0];
+      const moodScene = firstHighlight || moodDesc;
+      const t = avgTuition(item);
+      const tuitionText = t ? `${t.currency} $${t.value.toLocaleString()}` : "—";
+      const minAge = s.min_age ? `${s.min_age}+` : "—";
+      return `
+      <div class="school-card">
+        <div class="card-header"><h3>${s.name}</h3><p>${cityList(item)}</p></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:13px;color:var(--color-text-muted);letter-spacing:0.06em;text-transform:uppercase;font-weight:600">${moodTag}</div>
+          <div style="font-size:14px;color:var(--color-text-muted);line-height:1.6">${moodDesc}</div>
+          ${pills}
+          <div style="background:var(--color-bg,#FAFAF9);border-left:3px solid var(--color-line,rgba(0,0,0,0.14));padding:12px 14px;border-radius:0 8px 8px 0;font-size:15px;color:var(--color-text,#1A1A1E);line-height:1.55">「${moodScene}」</div>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-top:auto;padding-top:8px;border-top:1px solid var(--color-line,rgba(0,0,0,0.08));font-variant-numeric:tabular-nums">週費起 ${tuitionText}・最低年齡 ${minAge}</div>
+          ${item.note ? `<div class="advisor-note"><div class="advisor-note-label">顧問備注</div><div class="advisor-note-text">${item.note}</div></div>` : ""}
+        </div>
+      </div>`;
+    }
+
     function renderD(item: any): string {
       const s = item.school;
       const oneLiner = s.one_liner
@@ -252,6 +295,7 @@ serve(async (req: Request) => {
 
     const overviewCards = schools.map((item: any, idx: number) => {
       if (overviewStyle === 'B') return renderB(item, idx);
+      if (overviewStyle === 'C') return renderC(item);
       if (overviewStyle === 'D') return renderD(item);
       return renderA(item);
     }).join("\n");
