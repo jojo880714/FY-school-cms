@@ -15,6 +15,8 @@
 | [COMPONENTS.md](./COMPONENTS.md) | 21 個元件 × 5 狀態 × Nexus/CMS 來源 |
 | [DATA_MODEL.md](./DATA_MODEL.md) | wireframe 資料點 → schema 欄位對齊 + 標出新增/延伸 |
 | [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md) | T1-T8 完整題目 + 建議解 + 阻擋的 sub-phase |
+| [CARD_VARIANTS.md](./CARD_VARIANTS.md) | LP 校區卡片 ABCD 4 variant pattern(2026-06-23 補) |
+| [PAGE_STRUCTURE.md](./PAGE_STRUCTURE.md) | LP 頁面 23 section + 節奏 + advisor-only 機制(2026-06-23 補) |
 
 ## 不在 repo 的東西
 

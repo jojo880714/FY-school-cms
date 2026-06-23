@@ -14,6 +14,25 @@
 | **CMS Design Hub.dc.html** | 主設計文件 | 資訊架構圖 (Mermaid)、3 條顧問流程 (Mermaid)、5 區塊摘要、18 情境手冊、元件清單、資料模型對齊、假設清單、A11y / 效能 / 擴充 | Tier 1+2+3 |
 | **放洋 CMS.dc.html** | 顧問端 App（5 區塊） | 左 CMS nav + 五大區塊互動切換：① 案件首頁 ② LP 產生器 6 步 wizard ③ LP 諮詢模式 ★ ④ 報價單 9 步 ★（含算費引擎 + 顧問/管理員權限切換）⑤ 分析報表 | Tier 1 |
 | **選校建議 LP.dc.html** | 公開 LP 範本 | fanyang-consult 風格，mobile-first 430px；右上角顧問⇄學生視角切換，advisor-only 區塊（顧問備注 / 諮詢進度）在學生視角隱藏 | Tier 1 |
+| **[CARD_VARIANTS.md](./CARD_VARIANTS.md)** | 元件 spec | LP 校區卡片 ABCD 4 variant pattern(從 LP source 抓出) | 補 COMPONENTS 漏抓 |
+| **[PAGE_STRUCTURE.md](./PAGE_STRUCTURE.md)** | 結構 spec | LP 頁面 23 section + 節奏 + advisor-only 機制(從 LP source 抓出) | 補漏抓 |
+
+---
+
+## 採用策略(2026-06-23 拍板)
+
+**面 B 公開 LP**:採用 **Option B — 抓骨架重寫**(`fanyang-consult` LP → React)。
+
+- **視覺 token**:已對齊(CMS [`src/styles/tokens.css`](../src/styles/tokens.css) 來源 = fanyang-consult)
+- **結構**:採用 LP 的 **ABCD variant pattern**(校區卡片)+ **23 section 節奏**(13 機械 + 10 語意)+ **advisor-only 機制**(`body.demo-mode` 切換)
+- **技術**:React 19 + Vite + TypeScript(non vanilla port)
+- **詳細 spec**:
+  - [`CARD_VARIANTS.md`](./CARD_VARIANTS.md) — ABCD 4 variant pattern,**單一 component + variant prop**,非 4 個獨立元件
+  - [`PAGE_STRUCTURE.md`](./PAGE_STRUCTURE.md) — 23 section + 5 個情感型 120px padding + 18 個 96px + advisor-only 2 個
+- **實作時機**:等 Phase 20 entity 解凍 + `lp_school_config` migration apply(詳見 [`../ARCHITECTURE.md`](../ARCHITECTURE.md) §7「能不能做」)
+- **詳細決策脈絡**:`/tmp/fanyang-consult-analysis.md`(暫存,日後可進 docs/ 歸檔)+ [`../ARCHITECTURE.md`](../ARCHITECTURE.md) §11 修訂歷史
+
+> 為什麼 Option B 不是 A(全盤照搬)或 C(抓部分):A 工程量小但兩套技術棧並存維護成本高;C 取捨邊界模糊需要跨 chat 對齊。B 兼顧「**利用 LP 設計成果**」+「**跟 CMS 技術棧統一**」,可控性最佳。
 
 ---
 
@@ -69,7 +88,7 @@
 | # | 待確認 |
 |---|--------|
 | T1 | `tuition_tiers` 加 `fixed/peak/unit` 的 ETL 方案 |
-| T2 | CRM 對接 protocol（案件遷移 mapping，預留 `crm_case_id`） |
+| T2 | 案件主資料 owner（暫時 CMS 自管，待 master plan）|
 | T3 | Nexus role mapping（manager / advisor / admin？） |
 | T4 | 報價 PDF 樣式：沿用現有版型還是重設計？ |
 | T5 | LP 草稿 / 報價單有效期 |

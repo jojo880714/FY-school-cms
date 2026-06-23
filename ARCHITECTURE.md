@@ -482,3 +482,12 @@ sequenceDiagram
 4. **跟 Nexus / 報價 / TKB chat 同步**(用我之前說的同步信草稿,記得清掉 Laura)
 
 寫完 master plan → 回來 → 我把本檔的 🔴 區塊更新成 🟢 → 進入 Phase 20 解凍評估。
+
+---
+
+## 11. 修訂歷史
+
+| 日期 | 變動 | 影響範圍 |
+|---|---|---|
+| **2026-06-23** | **拍板 Option B(抓骨架重寫)**:fanyang-consult LP(玫瑰+金 token 源頭)→ CMS 面 B 公開頁採用策略。利用 LP 設計成果(token / ABCD variant pattern / 23 section / 詩意調性)+ React 重寫對齊 CMS 技術棧。設計細節落實在 `design/` 兩個新 spec([`CARD_VARIANTS.md`](./design/CARD_VARIANTS.md) + [`PAGE_STRUCTURE.md`](./design/PAGE_STRUCTURE.md))。**實作時機**:等 Phase 20 entity 解凍 + `lp_school_config` migration apply。詳細決策脈絡:`/tmp/fanyang-consult-analysis.md`(暫存,日後可進 docs/ 歸檔)| `design/` 補 2 檔 spec / §7 凍住範圍不變 / §8 待辦 T1-T8 不變 |
+| 2026-06-19 | 本檔 v1 落地(Phase 20 三系統合併全圖,review 第二輪) | 首次落地 |
