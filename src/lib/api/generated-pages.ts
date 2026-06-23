@@ -32,6 +32,8 @@ export interface GeneratedPageRow {
   consultation_notes: string | null;
   // Phase 20 預留(實作 phase 才有 case_id)
   case_id?: string | null;
+  // Phase 1.1 — LP 卡片變體(per-LP build-time 決定)
+  card_variant: 'A' | 'B' | 'C' | 'D';
 }
 
 export interface ListPagesOptions {
