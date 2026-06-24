@@ -34,6 +34,9 @@ export interface GeneratedPageRow {
   case_id?: string | null;
   // Phase 1.1 — LP 卡片變體(per-LP build-time 決定)
   card_variant: 'A' | 'B' | 'C' | 'D';
+  // Phase 2 Batch 1 B1-0 — LP template 版本
+  // legacy = 舊 tabs 模板 comparison;scroll_v1 = 新 scroll 長頁 comparison_scroll
+  template_version: 'legacy' | 'scroll_v1';
 }
 
 export interface ListPagesOptions {
