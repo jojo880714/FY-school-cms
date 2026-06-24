@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{PAGE_TITLE}}</title>
+<meta name="description" content="放洋留遊學・語言學校諮詢工具">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/*
+ * comparison_scroll — fanyang-consult 23-section scroll 長頁模板
+ *
+ * 「逐批長出」原則:此 template 隨 Phase 2 Batch 1/2/3 漸進補上 section CSS。
+ * Batch 2/3 每加新 section,必須同步 UPDATE 此 row 補上該 section 的 CSS+JS。
+ *
+ * ── 已含 CSS 的 section 清單(隨 Batch 補)──────────────
+ *   Batch 1(本次): sec01 / sec02 (ABCD) / sec03 / sec07 / sec09 / sec_voices
+ *   Batch 2(待補): sec04 / sec05 / sec06 / sec08 / sec10 / statBreak /
+ *                  sec_area / sec_flight / sec_climate / sec_spend / sec_costfull
+ *   Batch 3(待補): sec_photos / sec_return(advisor) / sec11 / sec_safety / sec_faq / sec12 / sec13
+ *
+ * ── 已含 JS(Batch 1)─────────────────────────────────
+ *   demoToggle(顧問模式切換)
+ *   表格 scroll mask(sec03)
+ *   學費試算 URL state(sec07,LPCalcState shell)
+ *
+ * ── advisor-only CSS rule(base 級,Batch 3 補 advisor 段時不用改 base)
+ *   body.demo-mode .advisor-only{display:none}
+ *
+ * Source-of-truth:此檔 + DB page_templates(id='comparison_scroll').html_content
+ * 對應 EF generate-page(讀此 template 條件 = generated_pages.template_version = 'scroll_v1')
+ * 每 Batch UPDATE 時兩處同步。
+ */
+/* ============== Reset & Base ============== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{
+  font-family:'Noto Sans TC',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--ink);
+  font-weight:400;line-height:1.6;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+select,input{font-family:inherit}
+
+/* ============== Tokens ============== */
+:root{
+  --rose:#C8436A; --rose-d:#8C2445; --rose-l:#FBE9EF; --rose-m:#F2B3C5;
+  --gold:#C4893C; --gold-l:#F7EDD8;
+  --bg:#FAFAF9; --sur:#FFFFFF; --sur2:#F0F0EE;
+  --ink:#1A1A1E; --ink2:#3A3A40; --ink3:#6A6A70; --ink4:#9A9A9F;
+  --line:rgba(0,0,0,0.08); --line2:rgba(0,0,0,0.14);
+  --r:10px; --r-lg:14px; --r-sm:6px;
+  --top-bar-h:52px;
+  --sans:'Noto Sans TC',system-ui,-apple-system,sans-serif;
+  --display:var(--sans);
+  --mono:'DM Mono',ui-monospace,monospace;
+  --shadow-s:none;
+  --shadow-m:0 2px 8px rgba(0,0,0,0.04);
+  --icon-stroke:1.6;
+  --icon-size:18px;
+}
+/* ============== Layout shell ============== */
+.wrap{max-width:1080px;margin:0 auto;padding:0 48px}
+.wrap-wide{max-width:1200px;margin:0 auto;padding:0 48px}
+section{padding:96px 0;border-bottom:none}
+section:last-child{border-bottom:none}
+
+/* 情感型 section 給更大空間 */
+#sec01{padding:120px 0}
+#sec04{padding:120px 0}
+#sec08{padding:120px 0}
+#sec11{padding:120px 0}
+#sec13{padding:120px 0}
+
+/* 用底色塊製造節奏（非邊框） */
+#sec02,#sec_voices,#sec07,#sec_costfull,#sec_safety,#sec10{background:var(--bg)}
+#sec03,#sec05,#sec06,#sec_area,#sec_flight,#sec_climate,#sec_spend,#sec_return,#sec12{background:var(--sur)}
+.sec-h{margin-bottom:32px}
+.sec-eyebrow{
+  font-family:var(--mono);font-size:12px;letter-spacing:0.14em;
+  color:var(--ink3);text-transform:uppercase;margin-bottom:8px;font-weight:500;
+}
+.sec-title{
+  font-family:var(--display);font-style:normal;font-weight:600;
+  font-size:clamp(32px,3.5vw,44px);line-height:1.15;color:var(--ink);letter-spacing:-0.01em;
+}
+#sec01 .sec-title,
+#sec04 .sec-title,
+#sec08 .sec-title,
+#sec11 .sec-title{font-size:clamp(40px,4vw,56px)}
+#sec05 .sec-title,
+#sec06 .sec-title,
+#sec07 .sec-title,
+#sec10 .sec-title,
+#sec12 .sec-title{font-size:clamp(28px,3vw,38px)}
+.sec-sub{margin-top:10px;color:var(--ink3);font-size:15px;max-width:760px}
+
+/* ============== Advisor bar ============== */
+#advisor-bar{
+  position:sticky;top:0;z-index:50;
+  min-height:var(--top-bar-h);
+  background:var(--ink);color:#fff;
+  display:flex;align-items:center;gap:14px;padding:6px 20px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  font-size:13px;flex-wrap:wrap;
+}
+.ab-brand{
+  font-family:var(--display);font-style:normal;font-weight:700;font-size:18px;
+  color:#fff;letter-spacing:0.01em;padding-right:14px;
+  border-right:1px solid rgba(255,255,255,0.15);
+  white-space:nowrap;
+}
+.ab-spacer{flex:1}
+.ab-toggle{
+  display:inline-flex;align-items:center;gap:8px;font-size:12px;
+  color:rgba(255,255,255,0.75);cursor:pointer;
+}
+.ab-toggle input{
+  appearance:none;width:32px;height:18px;background:rgba(255,255,255,0.18);
+  border-radius:999px;position:relative;cursor:pointer;transition:.15s;
+}
+.ab-toggle input::before{
+  content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;
+  background:#fff;border-radius:50%;transition:.15s;
+}
+.ab-toggle input:checked{background:var(--rose)}
+.ab-toggle input:checked::before{transform:translateX(14px)}
+
+/* Demo mode hides advisor-only(base 級) */
+body.demo-mode .advisor-only{display:none !important}
+body:not(.demo-mode) .demo-only{display:none !important}
+
+/* ============== Section 01 — Hero ============== */
+#sec01{
+  background:var(--ink);color:#fff;padding:120px 0;
+  position:relative;overflow:hidden;border-bottom:none;
+}
+#sec01::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 900px 500px at 50% 50%,rgba(255,255,255,0.04),transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{
+  position:absolute;top:24px;right:32px;
+  font-family:var(--mono);font-size:11px;letter-spacing:0.08em;
+  color:rgba(255,255,255,0.5);
+}
+.hero-line{
+  font-family:var(--display);font-style:normal;font-weight:700;
+  font-size:clamp(44px,5.5vw,72px);line-height:1.08;color:rgba(255,255,255,0.96);
+  text-align:center;letter-spacing:-0.015em;
+}
+.hero-line .accent{color:#fff;font-weight:700}
+.hero-cities{margin-top:28px;text-align:center;font-family:var(--sans);font-size:14px;color:rgba(255,255,255,0.6);letter-spacing:0.06em}
+.hero-cities span{display:inline-block;margin:0 12px}
+.hero-foot{
+  margin-top:60px;text-align:center;
+  border-top:1px solid rgba(255,255,255,0.14);
+  padding-top:24px;max-width:380px;margin-left:auto;margin-right:auto;
+  font-size:13px;color:rgba(255,255,255,0.55);letter-spacing:0.04em;
+}
+
+/* ============== Section 02 — Card grid + ABCD ============== */
+.cards-grid{display:grid;gap:20px}
+.cards-grid.cols-1{max-width:480px;margin:0 auto;grid-template-columns:1fr}
+.cards-grid.cols-2{grid-template-columns:1fr 1fr}
+.cards-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.cards-grid.cols-many{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+
+.card{
+  background:var(--sur);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:24px;display:flex;flex-direction:column;gap:14px;
+  box-shadow:var(--shadow-s);transition:border-color .2s ease,box-shadow .2s ease;
+}
+.card:hover{border-color:var(--line2);transform:translateY(-1px)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.card-city{font-family:var(--display);font-style:normal;font-weight:600;font-size:32px;line-height:1.1;color:var(--ink)}
+.card-region{font-size:12px;color:var(--ink3);margin-top:4px;letter-spacing:0.04em}
+.card-divider{height:1px;background:var(--line);margin:2px 0}
+
+.badge-age{
+  display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;
+  font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.02em;
+}
+.badge-age.age-16{background:#E5F4E8;color:#2A6B3A}
+.badge-age.age-18{background:#E1ECF7;color:#1D4F87}
+.badge-age.age-30plus{
+  background:var(--sur2);color:var(--ink);
+  border:1px solid var(--line2);font-weight:700;
+  padding:3px 10px;font-size:12px;
+}
+.age-requirement-banner{
+  display:flex;align-items:center;gap:7px;
+  background:var(--sur2);border:1px solid var(--line2);
+  border-radius:var(--r-sm);padding:7px 12px;
+  font-size:12px;color:var(--ink);
+  font-weight:500;margin-bottom:12px;line-height:1.4;
+}
+.age-req-icon{font-size:14px;flex-shrink:0}
+
+/* Style A — personas + stats + features */
+.personas{display:flex;flex-wrap:wrap;gap:6px}
+.persona-tag{background:var(--sur2);color:var(--ink);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:500}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0}
+.stat-box{background:var(--sur2);border-radius:var(--r);padding:10px 8px;text-align:center}
+.stat-label{font-size:10px;color:var(--ink3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px}
+.stat-val{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink)}
+.feat-list{display:flex;flex-direction:column;gap:8px}
+.feat-item{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink2);line-height:1.5}
+.feat-item::before{content:'✓';color:var(--ink3);font-weight:700;flex-shrink:0;margin-top:1px;font-size:13px}
+
+/* Style B — fee focus */
+.fee-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:4px 0}
+.fee-label{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.fee-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--ink)}
+.fee-bar{height:6px;background:var(--sur2);border-radius:999px;overflow:hidden;margin:2px 0}
+.fee-bar-fill{height:100%;border-radius:999px;background:var(--ink)}
+.fee-level{font-size:11px;color:var(--ink3);display:flex;justify-content:space-between;margin-top:4px}
+.fee-estimate{background:var(--sur2);border-radius:var(--r);padding:10px 12px;font-size:13px;color:var(--ink2);font-family:var(--mono)}
+.fee-twd{font-family:var(--mono);font-size:11px;color:var(--ink4);font-weight:400;margin-top:2px}
+
+/* Style C — mood focus */
+.mood-tag{font-family:var(--display);font-style:normal;font-size:15px;color:var(--ink3);letter-spacing:0.06em;text-transform:uppercase;font-weight:600}
+.mood-desc{font-size:13px;color:var(--ink3);line-height:1.6}
+.icon-pills{display:flex;flex-wrap:wrap;gap:6px}
+.icon-pill{background:var(--sur2);color:var(--ink2);padding:5px 10px;border-radius:999px;font-size:11px}
+.quote-box{
+  background:var(--sur2);border-left:3px solid var(--line2);
+  padding:12px 14px;border-radius:0 var(--r) var(--r) 0;
+  font-family:var(--display);font-style:normal;font-size:15px;color:var(--ink2);line-height:1.5;
+}
+.card-foot{font-size:12px;color:var(--ink3);font-family:var(--mono);margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+
+/* Style D — info dense */
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.kv{font-size:12px}
+.kv-l{color:var(--ink3);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.04em;font-size:10px}
+.kv-v{font-family:var(--mono);color:var(--ink);font-weight:500}
+.row-tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag-line{font-size:11px;color:var(--ink3);margin-bottom:4px;letter-spacing:0.04em}
+.mini-tag{background:var(--sur2);color:var(--ink2);padding:3px 8px;border-radius:4px;font-size:11px;font-family:var(--mono)}
+.mini-tag.is-special{color:var(--ink);font-weight:600}
+
+/* ============== Section 03 — Comparison table ============== */
+.tbl-wrap{
+  position:relative;
+  background:var(--sur);border:1px solid var(--line);border-radius:var(--r-lg);
+  overflow:hidden;box-shadow:var(--shadow-s);
+}
+.tbl-wrap::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:48px;
+  background:linear-gradient(to right,transparent,rgba(255,252,248,0.92));
+  pointer-events:none;border-radius:0 var(--r-lg) var(--r-lg) 0;
+  transition:opacity .3s;
+}
+.tbl-wrap.scrolled-end::after{opacity:0}
+.tbl-scroll{overflow-x:auto;position:relative;-webkit-overflow-scrolling:touch}
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+.cmp-tbl th,.cmp-tbl td{padding:14px 18px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line)}
+.cmp-tbl thead th{background:var(--sur2);color:var(--ink);font-weight:500;font-size:13px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.cmp-tbl tbody tr:hover{background:rgba(200,67,106,0.025)}
+.cmp-tbl tbody tr:last-child td{border-bottom:none}
+.cmp-tbl .col-label{
+  position:sticky;left:0;background:var(--sur);z-index:2;
+  font-weight:500;color:var(--ink3);font-size:12px;
+  letter-spacing:0.04em;text-transform:uppercase;
+  border-right:1px solid var(--line);min-width:140px;
+}
+.cmp-tbl thead .col-label{background:var(--sur2)}
+
+/* ============== Section 07 — Fee calculator ============== */
+.calc-shared{
+  background:var(--sur);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:18px 22px;margin-bottom:22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+}
+.calc-shared-label{font-size:13px;color:var(--ink2);font-weight:500}
+.weeks-pills{display:flex;flex-wrap:wrap;gap:6px}
+.weeks-pill{
+  padding:6px 13px;border-radius:999px;font-family:var(--mono);font-size:12px;
+  background:var(--sur2);color:var(--ink2);border:1px solid transparent;transition:all .15s;
+}
+.weeks-pill:hover{color:var(--ink)}
+.weeks-pill.is-on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.calc-cols{display:grid;gap:18px}
+.calc-card{
+  background:var(--ink);color:#fff;border-radius:var(--r-lg);padding:24px 22px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.calc-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.calc-city{font-family:var(--display);font-style:normal;font-weight:600;font-size:26px;color:#fff}
+.calc-flag{font-size:20px}
+.calc-controls{display:flex;flex-direction:column;gap:10px}
+.calc-ctrl-row{display:flex;flex-direction:column;gap:4px}
+.calc-ctrl-row label{font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:0.06em;text-transform:uppercase}
+.calc-ctrl-row select{
+  background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);
+  padding:8px 12px;border-radius:var(--r-sm);font-size:13px;font-family:var(--sans);
+}
+.calc-ctrl-row select option{background:var(--ink);color:#fff}
+.calc-breakdown{
+  background:rgba(255,255,255,0.05);border-radius:var(--r);
+  padding:14px 16px;display:flex;flex-direction:column;gap:8px;
+}
+.calc-line{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.calc-line-l{color:rgba(255,255,255,0.6)}
+.calc-line-v{font-family:var(--mono);color:#fff;font-weight:500}
+.calc-divider{height:1px;background:rgba(255,255,255,0.10);margin:4px 0}
+.calc-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:6px}
+.calc-total .l{font-size:13px;color:rgba(255,255,255,0.85)}
+.calc-total .v{font-family:var(--mono);font-size:22px;color:var(--rose-m);font-weight:600}
+.calc-twd{text-align:right;font-size:12px;color:rgba(255,255,255,0.55);font-family:var(--mono)}
+.calc-rate-note{margin-top:14px;text-align:center;font-size:12px;color:var(--ink3);font-family:var(--mono);letter-spacing:0.04em}
+
+/* ============== Section 09 — Personas ============== */
+.persona-cols{display:grid;gap:18px}
+.persona-col{display:flex;flex-direction:column;gap:14px}
+.persona-col-head{
+  font-family:var(--display);font-style:normal;font-weight:600;font-size:20px;color:var(--ink);
+  padding-bottom:8px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:6px;
+}
+.persona-card{
+  background:var(--sur2);border:1px solid var(--line2);border-radius:var(--r);
+  padding:16px 18px;display:flex;flex-direction:column;gap:8px;
+}
+.persona-role{font-size:14px;font-weight:500;color:var(--ink);line-height:1.5}
+.persona-why{font-size:13px;color:var(--ink2);line-height:1.6}
+.persona-tags-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.persona-mini{
+  background:var(--sur);color:var(--ink2);border:1px solid var(--line);
+  padding:3px 9px;border-radius:4px;font-size:11px;font-weight:500;
+}
+
+/* ============== Refactor v2 — Tab system (sec_voices etc.) ============== */
+.tabs-mode-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:14px;flex-wrap:wrap}
+.tabs-mode-switch{display:inline-flex;background:var(--sur2);border-radius:var(--r-sm);padding:3px;gap:2px}
+.tabs-mode-switch button{
+  background:transparent;color:var(--ink3);padding:5px 12px;border-radius:var(--r-sm);
+  font-size:11px;font-family:var(--sans);cursor:pointer;border:none;transition:all .15s;
+}
+.tabs-mode-switch button.is-on{background:var(--sur);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+.spread-mode .content-tabs{display:none}
+.spread-mode .tab-panel{display:block !important;margin-bottom:24px}
+.spread-mode .tab-panel:last-child{margin-bottom:0}
+.spread-mode .tab-panel::before{
+  content:attr(data-spread-label);
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--display);font-size:18px;font-weight:600;
+  color:var(--ink);margin-bottom:12px;
+  padding-bottom:8px;border-bottom:1px solid var(--line);
+}
+.content-tabs{display:flex;gap:6px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0;flex-wrap:wrap}
+.content-tab{
+  display:flex;align-items:center;gap:7px;
+  font-size:13px;font-weight:500;color:var(--ink3);padding:8px 16px;
+  border-radius:var(--r-sm) var(--r-sm) 0 0;
+  background:none;border:none;border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:all .15s;cursor:pointer;font-family:var(--sans);
+}
+.content-tab:hover{color:var(--ink);background:var(--sur2)}
+.content-tab.is-on{color:var(--ink);border-bottom-color:var(--ink3);background:var(--sur)}
+.tab-panel{display:none}
+.tab-panel.is-on{display:block}
+
+/* ============== Section sec_voices — 學員見證 + 國籍比例 ============== */
+.voices-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start}
+.testimonials-col{display:flex;flex-direction:column;gap:14px}
+.testimonial-card{
+  background:var(--sur);border:1px solid var(--line);
+  border-left:3px solid var(--line2);
+  border-radius:var(--r);padding:18px 20px;
+}
+.tm-quote{font-family:var(--display);font-style:normal;font-size:18px;color:var(--ink);line-height:1.55;margin-bottom:12px}
+.tm-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink3)}
+.tm-avatar{width:36px;height:36px;border-radius:50%;background:var(--sur2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.tm-meta-text{display:flex;flex-direction:column;gap:2px}
+.tm-name{font-weight:500;color:var(--ink2);font-size:13px}
+.tm-detail{font-size:11px;color:var(--ink4);font-family:var(--mono)}
+.tm-link{margin-left:auto;font-size:11px;color:var(--ink3);font-family:var(--mono);text-decoration:none}
+.testimonial-card.is-placeholder{border-style:dashed;background:var(--sur2);opacity:0.85}
+.testimonial-card.is-placeholder .tm-quote{color:var(--ink3)}
+.nationalities-col{background:var(--sur);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px}
+.nat-col-title{font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px}
+.nat-col-sub{font-size:11px;color:var(--ink4);margin-bottom:16px;font-family:var(--mono)}
+.nat-bars{display:flex;flex-direction:column;gap:9px}
+.nat-row{display:grid;grid-template-columns:1fr 36px;gap:8px;align-items:center}
+.nat-label{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.nat-flag{font-size:15px}
+.nat-bar{height:7px;background:var(--sur2);border-radius:999px;overflow:hidden;margin-top:3px}
+.nat-bar-fill{height:100%;background:var(--ink);border-radius:999px;transition:width .6s ease}
+.nat-pct{font-family:var(--mono);font-size:11px;color:var(--ink3);text-align:right}
+.nat-note{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:10px;color:var(--ink4);line-height:1.6;font-family:var(--mono)}
+
+.hidden{display:none !important}
+
+/* ============== RWD breakpoints ============== */
+@media (max-width:1280px){
+  .wrap,.wrap-wide{max-width:100%;padding:0 32px}
+}
+@media (max-width:1100px){
+  .wrap,.wrap-wide{padding:0 24px}
+  .cards-grid.cols-3{grid-template-columns:1fr 1fr}
+  .cards-grid.cols-many{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .calc-cols,.persona-cols{grid-template-columns:1fr !important}
+}
+@media (max-width:900px){
+  section{padding:64px 0}
+  #sec01,#sec04,#sec08,#sec11,#sec13{padding:80px 0}
+  .wrap,.wrap-wide{padding:0 20px}
+  .cards-grid.cols-2,.cards-grid.cols-3,.cards-grid.cols-many{grid-template-columns:1fr}
+  .voices-grid{grid-template-columns:1fr}
+  #advisor-bar{padding:8px 16px;gap:10px}
+  .ab-brand{font-size:16px;padding-right:10px}
+}
+@media (max-width:520px){
+  .wrap,.wrap-wide{padding:0 16px}
+  section{padding:48px 0}
+  #sec01,#sec04,#sec08,#sec11,#sec13{padding:60px 0}
+}
+</style>
+</head>
+<body class="demo-mode">
+
+<div id="advisor-bar">
+  <span class="ab-brand">放洋留遊學</span>
+  <span style="font-size:13px;color:rgba(255,255,255,0.6);margin-left:14px">{{PAGE_TITLE}}</span>
+  <div class="ab-spacer"></div>
+  <label class="ab-toggle">
+    <input type="checkbox" id="demoToggle">
+    <span>顧問檢視</span>
+  </label>
+</div>
+
+{{PROFILE_SUMMARY}}
+
+<section id="sec01">{{SEC01_HTML}}</section>
+<section id="sec02">{{SEC02_HTML}}</section>
+<section id="sec03">{{SEC03_HTML}}</section>
+<section id="sec07">{{SEC07_HTML}}</section>
+<section id="sec09">{{SEC09_HTML}}</section>
+<section id="sec_voices">{{SEC_VOICES_HTML}}</section>
+
+<script>
+// === Batch 1 R-C 客戶端 JS(3 個)===
+
+// (1) demoToggle 顧問模式切換
+document.getElementById('demoToggle').onchange = (e) => {
+  document.body.classList.toggle('demo-mode', !e.target.checked);
+};
+
+// (2) Table scroll mask — sec03 比較表右邊漸層遮罩
+document.querySelectorAll('.tbl-scroll').forEach(tblScroll => {
+  if(tblScroll.dataset.maskBound === '1') return;
+  tblScroll.dataset.maskBound = '1';
+  const update = () => {
+    const atEnd = tblScroll.scrollLeft + tblScroll.clientWidth >= tblScroll.scrollWidth - 8;
+    tblScroll.closest('.tbl-wrap')?.classList.toggle('scrolled-end', atEnd);
+  };
+  tblScroll.addEventListener('scroll', update);
+  update();
+});
+
+// (3) 學費試算 URL state — LPCalcState shell(sec07 markup 由 B1-2 EF port 時綁實際控制)
+window.LPCalcState = {
+  read() {
+    const p = new URLSearchParams(window.location.search);
+    const programs = {};
+    for (const [k, v] of p.entries()) {
+      if (k.startsWith('program-')) programs[k.slice('program-'.length)] = v;
+    }
+    return { weeks: Number(p.get('weeks')) || null, programs };
+  },
+  write(state) {
+    const p = new URLSearchParams(window.location.search);
+    if (state.weeks != null) p.set('weeks', String(state.weeks));
+    else p.delete('weeks');
+    for (const [school, program] of Object.entries(state.programs || {})) {
+      p.set('program-' + school, program);
+    }
+    history.replaceState(null, '', window.location.pathname + (p.toString() ? '?' + p : ''));
+  },
+};
+</script>
+</body>
+</html>
