@@ -782,6 +782,52 @@ function renderSec_photos(schools: any[], photos: any[]): string {
 }
 
 // ════════════════════════════════════════════════════════════════════
+//  Phase 2 Batch 2 ⑤ FAQ sec_faq helper
+// ════════════════════════════════════════════════════════════════════
+
+// renderSec_faq — port from LP line 4281-4303
+// per-school 映射:LP source 全 FAQ hardcode(無 per-school 分組)→ EF 兩層
+//   通用 FAQ(school_id NULL)— 全 LP 共用
+//   校級 FAQ(school_id 指定,只當該 school 在當前 LP 才出現)
+// 渲染順序:通用先 + 校級後,faq-item 編號 01/02/...
+// 全空(連通用都沒)→ return '' 整段隱藏
+function renderSec_faq(schools: any[], faq: any[]): string {
+  if (faq.length === 0) return '';
+  const schoolIds = new Set(schools.map((it: any) => it.school?.id).filter(Boolean));
+
+  const generalFaq = faq
+    .filter((f: any) => !f.school_id)
+    .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+  const schoolFaq = faq
+    .filter((f: any) => f.school_id && schoolIds.has(f.school_id))
+    .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+
+  const all = [...generalFaq, ...schoolFaq];
+  if (all.length === 0) return '';
+
+  const items = all.map((f: any, i: number) => `
+    <div class="faq-item">
+      <div class="faq-q">
+        <span class="faq-q-num">${String(i + 1).padStart(2, '0')}</span>
+        <span>${escapeHtml(f.question || '')}</span>
+      </div>
+      <div class="faq-a">${escapeHtml(f.answer || '')}</div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="wrap">
+      <div class="sec-h">
+        <div class="sec-eyebrow">常見問題</div>
+        <div class="sec-title">出國前你會想問的事</div>
+        <div class="sec-sub">這些都是過去學員在諮詢時最常問的問題。如果這裡沒有你的疑問,直接聯絡放洋顧問。</div>
+      </div>
+      <div class="faq-grid">${items}</div>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════════
 //  serve(主入口)
 // ════════════════════════════════════════════════════════════════════
 
@@ -841,6 +887,7 @@ serve(async (req: Request) => {
     let daySchedule: any[] = [];
     let voicesRows: any[] = [];
     let photoRows: any[] = [];
+    let faqRows: any[] = [];
     if (templateVersion === 'scroll_v1' && schoolIds.length > 0) {
       const { data: dsData, error: dsErr } = await supabase
         .from('day_schedule')
@@ -862,8 +909,13 @@ serve(async (req: Request) => {
         .in('school_id', schoolIds);
       if (pErr) console.error('photos fetch error:', pErr.message);
       photoRows = pData || [];
+
+      // faq 抓全表,JS 過濾通用(school_id NULL)+ 當前 schoolIds 命中校級
+      const { data: fData, error: fErr } = await supabase.from('faq').select('*');
+      if (fErr) console.error('faq fetch error:', fErr.message);
+      faqRows = (fData || []).filter((f: any) => !f.school_id || schoolIds.includes(f.school_id));
     }
-    console.log('day_schedule rows:', daySchedule.length, 'voices rows:', voicesRows.length, 'photos rows:', photoRows.length);
+    console.log('day_schedule rows:', daySchedule.length, 'voices rows:', voicesRows.length, 'photos rows:', photoRows.length, 'faq rows:', faqRows.length);
 
     // ════════════════════════════════════════════════════════
     //  分流:scroll_v1 走新 6 個 renderSec / legacy 走舊邏輯
@@ -883,7 +935,8 @@ serve(async (req: Request) => {
         .replace("{{SEC08_HTML}}", renderSec08(schools, daySchedule))
         .replace("{{SEC07_HTML}}", renderSec07(schools))
         .replace("{{SEC09_HTML}}", renderSec09(schools))
-        .replace("{{SEC_VOICES_HTML}}", renderSec_voices(schools, voicesRows));
+        .replace("{{SEC_VOICES_HTML}}", renderSec_voices(schools, voicesRows))
+        .replace("{{SEC_FAQ_HTML}}", renderSec_faq(schools, faqRows));
     } else {
       // ── legacy:既有 tabs template,所有 placeholder 邏輯保留不動 ──
       const schoolCount = schools.length;
