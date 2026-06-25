@@ -626,11 +626,13 @@ function renderSec09(schools: any[]): string {
 }
 
 // renderSec_voices 學員見證 + 國籍 — port from LP line 4417-4491
-// per-school 映射:LP c.testimonials(per-campus,schema 沒)+ c.nationalities
-//   testimonials → placeholder「Batch 後續補 schema」
-//   nationalities → nationality_breakdown(Phase 18a 已 migrate)
+// per-school 映射:LP c.testimonials(per-campus,LP source 是 hardcode)+ c.nationalities
+//   testimonials → S3.3 改從 voices 表(新表)抓真實 quote/name/detail
+//     有 voices → 渲染 N 個 testimonial-card(non-placeholder)
+//     沒 voices → 維持 placeholder「請洽顧問取得 X 學員見證」
+//   nationalities → nationality_breakdown(Phase 18a 已 migrate,本段不動)
 // Batch 1 簡化:tab 機制移除(switchTab JS 沒包進 page_template),改 stack 多校
-function renderSec_voices(schools: any[]): string {
+function renderSec_voices(schools: any[], voices: any[]): string {
   if (schools.length === 0) return '';
 
   const blocks = schools.map((item: any) => {
@@ -659,21 +661,41 @@ function renderSec_voices(schools: any[]): string {
       : `<div class="nat-bars">${natRows}</div>
          <div class="nat-note">★ 本比例為示意參考值,<b>非官方公布數據</b>。實際國籍組成依當期入學學員不同,請以該校公布為準。</div>`;
 
+    // S3.3:voices 表抓該校學員見證(sort_order 排序)
+    const schoolVoices = voices
+      .filter((v: any) => v.school_id === s.id)
+      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+
+    const tmCards = schoolVoices.length > 0
+      ? schoolVoices.map((v: any) => `
+          <div class="testimonial-card">
+            <div class="tm-quote">「${escapeHtml(v.quote || '')}」</div>
+            <div class="tm-meta">
+              <div class="tm-avatar">👤</div>
+              <div class="tm-meta-text">
+                <div class="tm-name">${escapeHtml(v.student_name || '—')}</div>
+                ${v.student_detail ? `<div class="tm-detail">${escapeHtml(v.student_detail)}</div>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('')
+      : `<div class="testimonial-card is-placeholder">
+          <div class="tm-quote">「請洽顧問取得 ${escapeHtml(s.name)} 學員見證」</div>
+          <div class="tm-meta">
+            <div class="tm-avatar">⚠</div>
+            <div class="tm-meta-text">
+              <div class="tm-name">待補</div>
+              <div class="tm-detail">該校尚未提供學員見證</div>
+            </div>
+          </div>
+        </div>`;
+
     return `
       <div style="margin-bottom:36px">
         <div style="font-family:var(--display);font-weight:600;font-size:20px;color:var(--ink);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--line)">${escapeHtml(s.name)}</div>
         <div class="voices-grid">
           <div class="testimonials-col">
-            <div class="testimonial-card is-placeholder">
-              <div class="tm-quote">「請洽顧問取得 ${escapeHtml(s.name)} 學員見證」</div>
-              <div class="tm-meta">
-                <div class="tm-avatar">⚠</div>
-                <div class="tm-meta-text">
-                  <div class="tm-name">待補</div>
-                  <div class="tm-detail">內部 schema 尚無 testimonials 欄位,Batch 後續補</div>
-                </div>
-              </div>
-            </div>
+            ${tmCards}
           </div>
           <div class="nationalities-col">
             <div class="nat-col-title">這間學校的同學來自哪裡</div>
@@ -755,6 +777,7 @@ serve(async (req: Request) => {
     //   S3.2 先 query day_schedule
     const schoolIds: string[] = (schools as any[]).map((it: any) => it.school?.id).filter(Boolean);
     let daySchedule: any[] = [];
+    let voicesRows: any[] = [];
     if (templateVersion === 'scroll_v1' && schoolIds.length > 0) {
       const { data: dsData, error: dsErr } = await supabase
         .from('day_schedule')
@@ -762,8 +785,15 @@ serve(async (req: Request) => {
         .in('school_id', schoolIds);
       if (dsErr) console.error('day_schedule fetch error:', dsErr.message);
       daySchedule = dsData || [];
+
+      const { data: vData, error: vErr } = await supabase
+        .from('voices')
+        .select('*')
+        .in('school_id', schoolIds);
+      if (vErr) console.error('voices fetch error:', vErr.message);
+      voicesRows = vData || [];
     }
-    console.log('day_schedule rows:', daySchedule.length);
+    console.log('day_schedule rows:', daySchedule.length, 'voices rows:', voicesRows.length);
 
     // ════════════════════════════════════════════════════════
     //  分流:scroll_v1 走新 6 個 renderSec / legacy 走舊邏輯
@@ -782,7 +812,7 @@ serve(async (req: Request) => {
         .replace("{{SEC08_HTML}}", renderSec08(schools, daySchedule))
         .replace("{{SEC07_HTML}}", renderSec07(schools))
         .replace("{{SEC09_HTML}}", renderSec09(schools))
-        .replace("{{SEC_VOICES_HTML}}", renderSec_voices(schools));
+        .replace("{{SEC_VOICES_HTML}}", renderSec_voices(schools, voicesRows));
     } else {
       // ── legacy:既有 tabs template,所有 placeholder 邏輯保留不動 ──
       const schoolCount = schools.length;
