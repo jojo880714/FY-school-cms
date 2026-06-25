@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ALL_FIELD_KEYS, FIELD_GROUPS } from '../types';
+// Phase 2 Batch 1 B1-3: LP 卡片 ABCD 近似預覽
+import { Card, PLACEHOLDER_CAMPUS, CARD_CSS } from '../components/lp/Card';
 
 interface School {
   id: string;
@@ -455,8 +457,9 @@ export function CreatePage() {
   const [maxWeeks, setMaxWeeks] = useState<number | null>(null);
   // Q3 opt-in — 是否將學生條件加入公開頁
   const [includeProfileInPage, setIncludeProfileInPage] = useState<boolean>(false);
-  // Phase 17-style — LP 卡片樣式 (A 決策 / B 費用 / D 資訊密集)
-  const [selectedStyle, setSelectedStyle] = useState<'A' | 'B' | 'D'>('A');
+  // Phase 17-style — LP 卡片樣式 (A 學員適配 / B 費用導向 / C 氛圍情感 / D 資訊密集)
+  // Phase 2 Batch 1 B1-3: type 擴 ABCD,加 C 變體
+  const [selectedStyle, setSelectedStyle] = useState<'A' | 'B' | 'C' | 'D'>('A');
   // Phase 19b — 學生基本資料
   const [studentName, setStudentName] = useState<string>('');
   const [studentContact, setStudentContact] = useState<string>('');
@@ -543,6 +546,10 @@ export function CreatePage() {
       if (page.campus_ids && Array.isArray(page.campus_ids)) {
         const idSet = new Set<string>(page.campus_ids);
         setSelected(allCampuses.filter((c) => idSet.has(c.id)));
+      }
+      // Phase 2 Batch 1 B1-3: 編輯既有 LP 還原 card_variant
+      if (page.card_variant === 'A' || page.card_variant === 'B' || page.card_variant === 'C' || page.card_variant === 'D') {
+        setSelectedStyle(page.card_variant);
       }
       setLoadingEdit(false);
     }
@@ -712,6 +719,9 @@ export function CreatePage() {
 
       if (editSlug) {
         // 編輯模式:UPDATE 既有 row,保留 created_by/status,推進 updated_at
+        // Phase 2 Batch 1 B1-3: 同步寫 card_variant(避免每次編輯 reset)
+        // ★ template_version 不動 — 既有 legacy 留 legacy / scroll_v1 留 scroll_v1
+        //   舊頁統一切 scroll 留 Phase 2 三批完成後另開 commit
         const { error: updErr } = await supabase
           .from('generated_pages')
           .update({
@@ -720,6 +730,7 @@ export function CreatePage() {
             campus_ids: selected.map((c) => c.id),
             selected_fields: fields,
             advisor_notes: notes,
+            card_variant: selectedStyle,
             updated_at: new Date().toISOString(),
           })
           .eq('slug', editSlug);
@@ -728,6 +739,8 @@ export function CreatePage() {
       } else {
         // 建立模式:INSERT,status=draft,Edge Function 後續 update 成 published
         // 用 INSERT 而非 UPSERT,讓 slug 碰撞時拋明確錯誤(23505)而非靜默覆蓋
+        // Phase 2 Batch 1 B1-3: ★ 新建 LP 寫 template_version='scroll_v1' + card_variant
+        //   → EF 抓到 scroll_v1 走新 comparison_scroll 長頁(舊 25 LP 維持 legacy 不動)
         const { error: insertErr } = await supabase
           .from('generated_pages')
           .insert({
@@ -739,6 +752,8 @@ export function CreatePage() {
             advisor_notes: notes,
             status: 'draft',
             created_by: user.id,
+            card_variant: selectedStyle,
+            template_version: 'scroll_v1',
           });
         if (insertErr) {
           if (insertErr.code === '23505') {
@@ -767,7 +782,9 @@ export function CreatePage() {
               selectedPurposes: selectedPurposes,
               maxWeeks: maxWeeks,
             } : null,
-            style: selectedStyle,
+            // Phase 2 Batch 1 B1-3: 改名 style → cardVariant(對齊 C2 EF 端)
+            //   不再送 style;EF v33+ 雙名兼容(B1-4 cleanup 會移除 EF ?? body.style 墊片)
+            cardVariant: selectedStyle,
           },
         }
       );
@@ -1551,10 +1568,12 @@ export function CreatePage() {
               LP 展示樣式
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
+              {/* Phase 2 Batch 1 B1-3: 4 個變體選擇按鈕(沿用既有藍色 admin chrome 風格)*/}
               {([
-                { id: 'A', label: 'A 決策型', desc: '人物標籤 + 關鍵數字' },
-                { id: 'B', label: 'B 費用型', desc: '課程費 / 住宿費 / 水位' },
-                { id: 'D', label: 'D 資訊密集型', desc: '所有規格一格看完' },
+                { id: 'A', label: 'A 學員適配', desc: '人物標籤 + 關鍵數字' },
+                { id: 'B', label: 'B 費用導向', desc: '課程費 / 住宿費 / 水位' },
+                { id: 'C', label: 'C 氛圍情感', desc: '氛圍標語 + 場景金句' },
+                { id: 'D', label: 'D 資訊密集', desc: '所有規格一格看完' },
               ] as const).map(({ id, label, desc }) => (
                 <button
                   key={id}
@@ -1585,6 +1604,23 @@ export function CreatePage() {
                   </div>
                 </button>
               ))}
+            </div>
+
+            {/* Phase 2 Batch 1 B1-3: 近似預覽區(用 placeholder Canary Wharf,不要求跟 EF 輸出 pixel sync)*/}
+            <div style={{ marginTop: '16px' }}>
+              <style>{CARD_CSS}</style>
+              <div style={{
+                fontSize: '11px',
+                color: '#9CA3AF',
+                marginBottom: '8px',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+              }}>
+                預覽 · {PLACEHOLDER_CAMPUS.name}(近似,不等同公開頁實際渲染)
+              </div>
+              <div style={{ maxWidth: '420px' }}>
+                <Card variant={selectedStyle} c={PLACEHOLDER_CAMPUS} />
+              </div>
             </div>
           </div>
 
