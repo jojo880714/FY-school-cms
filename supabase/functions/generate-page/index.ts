@@ -376,6 +376,83 @@ function renderSec03(schools: any[]): string {
   `;
 }
 
+// ════════════════════════════════════════════════════════════════════
+//  Phase 2 Batch 2 ① 氛圍/情感段 sec04 helper
+// ════════════════════════════════════════════════════════════════════
+
+// country → flag(支援已有的 8 國 + 其他預設 🌍)
+const countryFlag: Record<string, string> = {
+  'Canada': '🇨🇦', 'UK': '🇬🇧', 'USA': '🇺🇸', 'Australia': '🇦🇺',
+  'New Zealand': '🇳🇿', 'Ireland': '🇮🇪', 'Philippines': '🇵🇭', 'Malta': '🇲🇹',
+};
+
+// country → vibe-card 漸層([from, to, glow])
+//   LP source 用 per-campus hardcode demo 色票,EF per-school 改用 country-level 預設色
+const countryGradient: Record<string, [string, string, string]> = {
+  'Canada':      ['#1a2b4a', '#0d1d35', 'rgba(239,68,68,0.18)'],
+  'UK':          ['#2a1f3d', '#1a1326', 'rgba(168,85,247,0.18)'],
+  'USA':         ['#1f2a3d', '#0d1525', 'rgba(59,130,246,0.18)'],
+  'Australia':   ['#3d1f0d', '#2a1306', 'rgba(251,191,36,0.18)'],
+  'New Zealand': ['#0d3d2e', '#082a20', 'rgba(34,197,94,0.18)'],
+  'Ireland':     ['#0d2e1f', '#082015', 'rgba(34,197,94,0.18)'],
+  'Philippines': ['#0d2e3d', '#082030', 'rgba(34,197,94,0.18)'],
+  'Malta':       ['#3d2d1f', '#2a1d10', 'rgba(251,191,36,0.18)'],
+};
+const defaultGradient: [string, string, string] = ['#1a1a2e', '#16213e', 'rgba(100,120,200,0.18)'];
+
+// renderSec04 氛圍/情感段 — port from LP line 3785-3818
+// per-school 映射:LP per-campus vibe-card → per-school vibe-card
+//   無料(全 mood_* 為 NULL 且 pills 為空)→ return '' 整段隱藏
+//   無 country mapping → 用 defaultGradient + 🌍 flag
+function renderSec04(schools: any[]): string {
+  const withMood = schools.filter((it: any) => {
+    const s = it.school || {};
+    return s.mood_tag || s.mood_desc || s.mood_scene || (Array.isArray(s.pills) && s.pills.length > 0);
+  });
+  if (withMood.length === 0) return '';
+
+  const n = withMood.length;
+  const gridCls = n === 1 ? 'vibe-grid-1'
+    : n === 2 ? 'vibe-grid-2'
+    : n === 3 ? 'vibe-grid-3'
+    : n === 4 ? 'vibe-grid-4'
+    : 'vibe-grid-5';
+
+  const cards = withMood.map((item: any, idx: number) => {
+    const s = item.school || {};
+    const isHero = (n === 1) || (n >= 3 && idx === 0);
+    const [from, to, glow] = countryGradient[s.country] || defaultGradient;
+    const flag = countryFlag[s.country] || '🌍';
+    const cities = [...new Set((item.campuses || []).map((c: any) => c.city).filter(Boolean))].slice(0, 2).join('・');
+    const region = `${escapeHtml(s.country || '')}${cities ? '・' + escapeHtml(cities) : ''}`;
+    const moodTag = s.mood_tag || '';
+    const moodDesc = s.mood_desc || '';
+    const moodScene = s.mood_scene || '';
+    const pills: string[] = Array.isArray(s.pills) ? s.pills : [];
+
+    return `
+      <div class="vibe-card${isHero ? ' vibe-card-hero' : ''}" style="background:linear-gradient(135deg,${from} 0%,${to} 100%);--vibe-glow:radial-gradient(ellipse 400px 200px at 80% 20%,${glow},transparent 60%);">
+        <div class="vibe-region">${flag} ${region}</div>
+        ${moodTag ? `<div class="vibe-mood">${escapeHtml(moodTag)}</div>` : ''}
+        ${moodDesc ? `<div style="font-size:14px;color:rgba(255,255,255,0.82);line-height:1.6;margin-top:4px;">${escapeHtml(moodDesc)}</div>` : ''}
+        ${moodScene ? `<div class="vibe-scene">「${escapeHtml(moodScene)}」</div>` : ''}
+        ${pills.length ? `<div class="vibe-pills">${pills.map((p: string) => `<span class="vibe-pill">${escapeHtml(p)}</span>`).join('')}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="wrap">
+      <div class="sec-h">
+        <div class="sec-eyebrow">選一座城市,選一種生活</div>
+        <div class="sec-title">這座城市的「感覺」是什麼?</div>
+        <div class="sec-sub">不只看規格,也看你會走進什麼樣的日常。</div>
+      </div>
+      <div class="vibe-grid ${gridCls}">${cards}</div>
+    </div>
+  `;
+}
+
 // renderSec07 學費試算 — port from LP line 4659-4901
 // per-school 映射 + Batch 1 簡化:
 //   LP 有 dropdown(course / accomm)+ weeks select + Sec07State client-side
@@ -622,6 +699,7 @@ serve(async (req: Request) => {
         .replace("{{SEC01_HTML}}", renderSec01(schools))
         .replace("{{SEC02_HTML}}", renderSec02(schools, overviewStyle))
         .replace("{{SEC03_HTML}}", renderSec03(schools))
+        .replace("{{SEC04_HTML}}", renderSec04(schools))
         .replace("{{SEC07_HTML}}", renderSec07(schools))
         .replace("{{SEC09_HTML}}", renderSec09(schools))
         .replace("{{SEC_VOICES_HTML}}", renderSec_voices(schools));
