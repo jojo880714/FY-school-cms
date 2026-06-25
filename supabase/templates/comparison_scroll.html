@@ -1787,6 +1787,17 @@ section.is-visible,
   .float-contact-btn span{display:none}
   .calc-export-bar{flex-wrap:wrap}
 }
+
+/* === 設計保真修復 ‧ section visibility quick fix(2026-06-25)===
+   問題:LP 完整 CSS 含 section{opacity:0;transform:translateY(12px)} fade-in 預設,
+        需要 IntersectionObserver 加 .is-visible 才會 opacity:1。
+        本 page_template 未 port LP bindGlobalEvents() 觀察 JS → server-render 後 section 全空白。
+   暫時方案:覆寫 opacity:1,server-render 後立刻可見(犧牲 fade-in animation)。
+   後續:Batch 2/3 補 phase tracker JS 時一併加 IntersectionObserver,移除此 override。 */
+section, .section-break, .stat-break {
+  opacity: 1 !important;
+  transform: none !important;
+}
 </style>
 </head>
 <body class="demo-mode">
