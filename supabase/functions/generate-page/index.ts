@@ -720,6 +720,68 @@ function renderSec_voices(schools: any[], voices: any[]): string {
 }
 
 // ════════════════════════════════════════════════════════════════════
+//  Phase 2 Batch 2 ④ 校區照片 sec_photos(advisor-only)helper
+// ════════════════════════════════════════════════════════════════════
+
+// LP source masonry 6 slot 循環 size pattern
+const PHOTO_SIZES = ['tall', 'wide', 'sq', 'sq', 'tall', 'wide'];
+
+// renderSec_photos — port from LP line 4213-4258(placeholder slot → real img masonry)
+// per-school 映射:LP per-campus slot 占位 → EF per-school 真實 photos 表渲染
+//   有 photos → 渲染 N 張真實 img,size 走 PHOTO_SIZES round-robin
+//   沒料整段隱藏(return '')
+//   advisor-only class 由 template 端控制(body.demo-mode 隱藏)
+function renderSec_photos(schools: any[], photos: any[]): string {
+  if (schools.length === 0 || photos.length === 0) return '';
+
+  const blocks = schools.map((item: any) => {
+    const s = item.school || {};
+    const schoolPhotos = photos
+      .filter((p: any) => p.school_id === s.id)
+      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+    if (schoolPhotos.length === 0) return '';
+
+    const items = schoolPhotos.map((p: any, idx: number) => {
+      const size = PHOTO_SIZES[idx % PHOTO_SIZES.length];
+      const url = escapeHtml(p.image_url || '');
+      const cap = escapeHtml(p.caption || '');
+      const campus = escapeHtml(p.campus || s.name);
+      return `
+        <div class="masonry-item masonry-${size}" style="background:#1a1a2e">
+          <img src="${url}" alt="${cap}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit">
+          <div class="masonry-overlay">
+            <div class="masonry-city">${campus}</div>
+            ${cap ? `<div class="masonry-slot-label">${cap}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div style="margin-bottom:32px">
+        <div style="font-family:var(--display);font-weight:600;font-size:18px;color:var(--ink);margin-bottom:14px;padding:0 32px">${escapeHtml(s.name)}</div>
+        <div class="masonry-grid">${items}</div>
+      </div>
+    `;
+  }).filter(Boolean).join('');
+
+  if (!blocks) return '';
+
+  return `
+    <div class="wrap-wide">
+      <div class="wrap">
+        <div class="sec-h">
+          <div class="sec-eyebrow">真實的樣子</div>
+          <div class="sec-title">在那裡的日常</div>
+          <div class="sec-sub">這些是真實的校區環境與城市生活場景。</div>
+        </div>
+      </div>
+      ${blocks}
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════════
 //  serve(主入口)
 // ════════════════════════════════════════════════════════════════════
 
@@ -778,6 +840,7 @@ serve(async (req: Request) => {
     const schoolIds: string[] = (schools as any[]).map((it: any) => it.school?.id).filter(Boolean);
     let daySchedule: any[] = [];
     let voicesRows: any[] = [];
+    let photoRows: any[] = [];
     if (templateVersion === 'scroll_v1' && schoolIds.length > 0) {
       const { data: dsData, error: dsErr } = await supabase
         .from('day_schedule')
@@ -792,8 +855,15 @@ serve(async (req: Request) => {
         .in('school_id', schoolIds);
       if (vErr) console.error('voices fetch error:', vErr.message);
       voicesRows = vData || [];
+
+      const { data: pData, error: pErr } = await supabase
+        .from('photos')
+        .select('*')
+        .in('school_id', schoolIds);
+      if (pErr) console.error('photos fetch error:', pErr.message);
+      photoRows = pData || [];
     }
-    console.log('day_schedule rows:', daySchedule.length, 'voices rows:', voicesRows.length);
+    console.log('day_schedule rows:', daySchedule.length, 'voices rows:', voicesRows.length, 'photos rows:', photoRows.length);
 
     // ════════════════════════════════════════════════════════
     //  分流:scroll_v1 走新 6 個 renderSec / legacy 走舊邏輯
@@ -809,6 +879,7 @@ serve(async (req: Request) => {
         .replace("{{SEC02_HTML}}", renderSec02(schools, overviewStyle))
         .replace("{{SEC03_HTML}}", renderSec03(schools))
         .replace("{{SEC04_HTML}}", renderSec04(schools))
+        .replace("{{SEC_PHOTOS_HTML}}", renderSec_photos(schools, photoRows))
         .replace("{{SEC08_HTML}}", renderSec08(schools, daySchedule))
         .replace("{{SEC07_HTML}}", renderSec07(schools))
         .replace("{{SEC09_HTML}}", renderSec09(schools))
