@@ -453,6 +453,70 @@ function renderSec04(schools: any[]): string {
   `;
 }
 
+// ════════════════════════════════════════════════════════════════════
+//  Phase 2 Batch 2 ② 在當地的一天 sec08 helper
+// ════════════════════════════════════════════════════════════════════
+
+// renderSec08 在當地的一天 — port from LP line 4902-4959(renderSec08 + renderDayTimeline)
+// per-school 映射:LP tab(per-campus 切換 Sec08State.activeKey)→ EF 多校 stack(對齊 voices 段)
+//   一校多 campus 有 day_schedule → 各 campus 一塊 sub-timeline
+//   無料整段隱藏(return '')
+//   day_schedule 從 EF 內 query(client 不抓新表)
+function renderSec08(schools: any[], daySchedule: any[]): string {
+  if (schools.length === 0 || daySchedule.length === 0) return '';
+
+  const blocks = schools.map((item: any) => {
+    const s = item.school || {};
+    const schoolDays = daySchedule.filter((d: any) => d.school_id === s.id);
+    if (schoolDays.length === 0) return '';
+
+    // group by campus(支援未來多校區情境)
+    const byCampus: Record<string, any[]> = {};
+    for (const d of schoolDays) {
+      const k = d.campus || '(預設校區)';
+      if (!byCampus[k]) byCampus[k] = [];
+      byCampus[k].push(d);
+    }
+
+    const campusBlocks = Object.entries(byCampus).map(([campus, days]) => {
+      const sorted = [...days].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+      const rows = sorted.map((d: any) => `
+        <div class="day-row">
+          <div class="day-time-col">${escapeHtml(d.time || '')}</div>
+          <div class="day-content-col">
+            <div class="day-title">${escapeHtml(d.title || '')}</div>
+            ${d.description ? `<div class="day-desc">${escapeHtml(d.description)}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+      const campusHead = Object.keys(byCampus).length > 1
+        ? `<div style="font-size:14px;color:var(--ink3);font-weight:500;margin:18px 0 6px;letter-spacing:0.04em">${escapeHtml(campus)} 校區</div>`
+        : '';
+      return `${campusHead}<div class="day-timeline-full">${rows}</div>`;
+    }).join('');
+
+    return `
+      <div style="margin-bottom:36px">
+        <div style="font-family:var(--display);font-weight:600;font-size:20px;color:var(--ink);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--line)">${escapeHtml(s.name)}</div>
+        ${campusBlocks}
+      </div>
+    `;
+  }).filter(Boolean).join('');
+
+  if (!blocks) return '';
+
+  return `
+    <div class="wrap">
+      <div class="sec-h">
+        <div class="sec-eyebrow">你在那裡的一天</div>
+        <div class="sec-title">閉眼想像,這就是你的日常</div>
+        <div class="sec-sub">從早晨醒來到晚上睡前,這是你在那裡每一天會發生的事。</div>
+      </div>
+      ${blocks}
+    </div>
+  `;
+}
+
 // renderSec07 學費試算 — port from LP line 4659-4901
 // per-school 映射 + Batch 1 簡化:
 //   LP 有 dropdown(course / accomm)+ weeks select + Sec07State client-side
@@ -686,6 +750,21 @@ serve(async (req: Request) => {
     let html = templateData.html_content as string;
     const schools = schoolsInfo || [];
 
+    // ── Phase 2 Batch 2: EF 端 query 新 4 表(client 不抓)──
+    //   day_schedule(S3.2)/ voices(S3.3)/ photos(S3.4)/ faq(S3.5)
+    //   S3.2 先 query day_schedule
+    const schoolIds: string[] = (schools as any[]).map((it: any) => it.school?.id).filter(Boolean);
+    let daySchedule: any[] = [];
+    if (templateVersion === 'scroll_v1' && schoolIds.length > 0) {
+      const { data: dsData, error: dsErr } = await supabase
+        .from('day_schedule')
+        .select('*')
+        .in('school_id', schoolIds);
+      if (dsErr) console.error('day_schedule fetch error:', dsErr.message);
+      daySchedule = dsData || [];
+    }
+    console.log('day_schedule rows:', daySchedule.length);
+
     // ════════════════════════════════════════════════════════
     //  分流:scroll_v1 走新 6 個 renderSec / legacy 走舊邏輯
     // ════════════════════════════════════════════════════════
@@ -700,6 +779,7 @@ serve(async (req: Request) => {
         .replace("{{SEC02_HTML}}", renderSec02(schools, overviewStyle))
         .replace("{{SEC03_HTML}}", renderSec03(schools))
         .replace("{{SEC04_HTML}}", renderSec04(schools))
+        .replace("{{SEC08_HTML}}", renderSec08(schools, daySchedule))
         .replace("{{SEC07_HTML}}", renderSec07(schools))
         .replace("{{SEC09_HTML}}", renderSec09(schools))
         .replace("{{SEC_VOICES_HTML}}", renderSec_voices(schools));
